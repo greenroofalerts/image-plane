@@ -103,6 +103,24 @@ brightness), crop non-matching, false-positive checks across distinct
 scenes, dedup idempotency, vision-model detection and caption-response
 parsing fallbacks.
 
+## Decisions and next steps (agreed 2026-06-10)
+
+Full record in `docs/QUESTIONS-FOR-LEE.md`. Short version:
+
+- Parsing happens **locally on this MacBook** (external SSD if the
+  library outgrows ~41 GB free). Check free space before ingesting.
+- **7 s/photo sequential is fine** — overnight chunks, no sharding.
+- **Exact dupes** (byte-identical): delete command approved, to build.
+- **Near-dupes/bursts**: never hard-delete — best-of-group kept, rest
+  moved to a quarantine folder until the detector is proven on real
+  photos.
+- **Purpose**: captions feed a green-roof business evidence layer.
+  Planned next module — domain tagging (plant species, substrate type,
+  roof system, defect types) and GPS+date site-matching against the
+  GRA sites table. Personal photo streams fork later.
+- **HEIC**: supported in code; must be tested on real samples as the
+  first step when the export arrives.
+
 ## Hard rules honoured
 
 - No real photos were opened, viewed or processed during development.

@@ -1,37 +1,41 @@
-# Questions for Lee — image-plane (LEE-411)
+# Decisions — image-plane (LEE-411)
 
-Plain-language decisions queued from the scaffold session, 2026-06-09.
-None of these block running the pipeline; defaults are in place for all.
+The six open questions from the 2026-06-09 scaffold session, answered
+by Lee 2026-06-10. These are the operating decisions for the build.
 
-1. **Where is the photo library going to live while we parse it?** The
-   MacBook has about 12 GB free, which fits the model and the database
-   but not a full Takeout archive. If the export is on an external
-   drive or one of the Minis, the pipeline runs fine pointed at any
-   folder — but tell me the target and I'll sanity-check space first.
+1. **Working location: this MacBook, locally.** ~41 GB free should fit
+   the library; external SSD if not. Google Drive is delivery only,
+   never the working location. **Rule: sanity-check free space against
+   the export size when it lands, before ingesting.**
 
-2. **Is roughly 7 seconds per photo acceptable?** (Measured: 7.13 s —
-   details in docs/BENCHMARK.md.) For a 50,000-photo library that's
-   about 4 days of background captioning. It's resumable, so it can
-   run in overnight chunks — but if you want it faster we should shard
-   it across the Minis or accept a smaller/weaker model.
+2. **Speed: 7 s/photo sequential is accepted.** Overnight chunks, no
+   sharding across machines. Keep it simple.
 
-3. **What should happen to duplicates?** Right now the pipeline only
-   *records* them (which copy duplicates which, and how close). It
-   never deletes anything. Do you want a "move dupes to a review
-   folder" command, or is the report enough?
+3. **Exact duplicates: delete command approved** — byte-identical
+   (same sha256) only. Next build item; not built yet.
 
-4. **How aggressive should "near duplicate" be?** The current setting
-   catches re-encodes, resizes and brightness tweaks of the same shot,
-   but deliberately does NOT merge burst shots or crops. If you'd
-   rather group "basically the same moment" photos, that's a looser
-   threshold — easy to change, worth a decision.
+4. **Near-dupes and bursts: no hard deletes.** Keep the best of each
+   group, move the rest to a quarantine/review folder. The detector
+   earns deletion rights only after it is proven on real photos.
 
-5. **What do you want captions FOR?** If the end goal is search
-   ("show me photos of the van at a job site"), the next step after
-   captioning is a search command over captions+tags. If the goal is
-   feeding the memory spine or another system, the schema should get
-   an export format. The answer changes what gets built next.
+5. **Captions feed a domain intelligence layer — green roof business
+   evidence.** Direction for the next module (PLANNED, not built —
+   awaiting morning sign-off):
+   - Domain tagging: plant species, substrate type (shingle / pregrown
+     meadow / haybase), roof system details (EPDM, alu trim), defect
+     types.
+   - Site matching: GPS + date against the GRA sites table.
+   - Later stage: fork personal photos to separate streams (football
+     grounds; holidays).
 
-6. **HEIC: is your iCloud export HEIC or JPEG?** HEIC is supported,
-   but if your export is all HEIC I'd add a HEIC-specific test pass
-   before the real run.
+6. **Formats: assume both HEIC and JPEG.** First step when the export
+   arrives: test HEIC handling on real samples before any bulk run.
+
+## Agreed next steps (in order)
+
+1. When export lands: free-space check, then HEIC spot-test on real
+   samples.
+2. Build `image-plane dedup --delete-exact` (byte-identical only) and
+   a near-dupe quarantine command (move, never delete).
+3. Domain tagging + GRA site-matching module — design first, sign-off
+   before build.

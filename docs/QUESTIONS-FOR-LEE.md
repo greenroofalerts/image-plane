@@ -9,11 +9,11 @@ None of these block running the pipeline; defaults are in place for all.
    drive or one of the Minis, the pipeline runs fine pointed at any
    folder — but tell me the target and I'll sanity-check space first.
 
-2. **Is roughly 4–5 seconds per photo acceptable?** (Exact number in
-   docs/BENCHMARK.md.) For a 50,000-photo library that's a couple of
-   days of background captioning. It's resumable, so it can run in
-   overnight chunks — but if you want it faster we should run it on a
-   Mini or accept a smaller/weaker model.
+2. **Is roughly 7 seconds per photo acceptable?** (Measured: 7.13 s —
+   details in docs/BENCHMARK.md.) For a 50,000-photo library that's
+   about 4 days of background captioning. It's resumable, so it can
+   run in overnight chunks — but if you want it faster we should shard
+   it across the Minis or accept a smaller/weaker model.
 
 3. **What should happen to duplicates?** Right now the pipeline only
    *records* them (which copy duplicates which, and how close). It

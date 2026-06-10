@@ -1,0 +1,22 @@
+[project]
+name = "image-plane"
+version = "0.1.0"
+description = "Local photo-parsing pipeline: ingest, dedup, caption. No cloud calls."
+requires-python = ">=3.11"
+dependencies = [
+    "Pillow>=10.0",
+]
+
+[project.optional-dependencies]
+heic = ["pillow-heif>=0.16"]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+image-plane = "image_plane.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

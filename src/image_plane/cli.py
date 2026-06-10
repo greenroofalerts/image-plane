@@ -78,8 +78,8 @@ def main(argv: list[str] | None = None) -> int:
         total = conn.execute("SELECT COUNT(*) c FROM photos").fetchone()["c"]
         capd = conn.execute("SELECT COUNT(*) c FROM photos WHERE caption IS NOT NULL").fetchone()["c"]
         dupes = conn.execute("SELECT kind, COUNT(*) c FROM duplicates GROUP BY kind").fetchall()
-        print(f"photos: {total} | captioned: {capd} | "
-              f"dupes: {', '.join(f'{r['kind']}={r['c']}' for r in dupes) or 'none recorded'}")
+        dupe_txt = ", ".join("{}={}".format(r["kind"], r["c"]) for r in dupes) or "none recorded"
+        print(f"photos: {total} | captioned: {capd} | dupes: {dupe_txt}")
 
     conn.close()
     return 0

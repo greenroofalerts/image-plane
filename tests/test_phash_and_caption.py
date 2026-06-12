@@ -46,3 +46,42 @@ def test_parse_caption_response_malformed_json_falls_back():
 def test_parse_caption_response_json_missing_caption():
     out = oc.parse_caption_response('{"tags": ["x"]}')
     assert out["tags"] == []  # falls back to raw-text path
+
+
+def test_all_fail_caption_run_exits_nonzero(conn, tmp_path, fixtures, monkeypatch):
+    """LEE-559 R3: a caption run where every image fails must be loud —
+    nonzero exit from the CLI, never a clean-looking 0."""
+    from image_plane import cli as climod
+    from image_plane import db as dbmod
+    from image_plane import ingest
+
+    db_path = tmp_path / "cap.db"
+    c = dbmod.connect(db_path)
+    ingest.ingest_folder(c, fixtures / "icloud")
+    c.close()
+
+    def boom(model, path):  # no network, hard rule: nothing leaves the machine
+        raise RuntimeError("synthetic caption failure")
+
+    monkeypatch.setattr(oc, "caption_image", boom)
+    rc = climod.main(["--db", str(db_path), "caption", "--model", "fake-vision:0b"])
+    assert rc == 2
+
+
+def test_caption_failures_under_threshold_exit_zero(conn, tmp_path, fixtures, monkeypatch):
+    """Counts always print; below --max-fail-pct the run still succeeds."""
+    from image_plane import cli as climod
+    from image_plane import db as dbmod
+    from image_plane import ingest
+
+    db_path = tmp_path / "cap2.db"
+    c = dbmod.connect(db_path)
+    ingest.ingest_folder(c, fixtures / "icloud")
+    c.close()
+
+    def fine(model, path):
+        return {"caption": "a synthetic test image", "tags": ["test"]}
+
+    monkeypatch.setattr(oc, "caption_image", fine)
+    rc = climod.main(["--db", str(db_path), "caption", "--model", "fake-vision:0b"])
+    assert rc == 0

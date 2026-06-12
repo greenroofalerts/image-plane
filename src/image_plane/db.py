@@ -35,6 +35,19 @@ CREATE TABLE IF NOT EXISTS photos (
 CREATE INDEX IF NOT EXISTS idx_photos_file_hash ON photos(file_hash);
 CREATE INDEX IF NOT EXISTS idx_photos_phash ON photos(phash);
 
+-- LEE-559: poison-file log. A path lands here when ingest cannot read it
+-- (permissions, truncation, corrupt container). Reruns skip these paths
+-- unless --retry-errors is passed, so one bad file can never wedge the
+-- batch into a crash loop.
+CREATE TABLE IF NOT EXISTS ingest_errors (
+    id INTEGER PRIMARY KEY,
+    path TEXT UNIQUE NOT NULL,
+    error TEXT NOT NULL,
+    first_seen TEXT NOT NULL,
+    last_seen TEXT NOT NULL,
+    attempts INTEGER NOT NULL DEFAULT 1
+);
+
 CREATE TABLE IF NOT EXISTS duplicates (
     id INTEGER PRIMARY KEY,
     photo_id INTEGER NOT NULL REFERENCES photos(id),

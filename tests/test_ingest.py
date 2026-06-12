@@ -89,3 +89,48 @@ def test_gps_dms_conversion():
 def test_source_autodetect(fixtures):
     assert ingest.detect_source(fixtures / "takeout") == "takeout"
     assert ingest.detect_source(fixtures / "icloud") == "icloud"
+
+
+def test_poison_files_do_not_block_batch(conn, tmp_path, fixtures):
+    """LEE-559 R2: a synthetic Takeout dir with 2 poison files ingests
+    everything else, logs the skips, and reruns skip the poison paths."""
+    import os
+
+    work = tmp_path / "poisoned"
+    work.mkdir()
+    # 3 good synthetic images (+ one sidecar so source autodetects takeout)
+    for n in ("scene_00", "scene_01", "scene_02"):
+        (work / f"{n}.jpg").write_bytes((fixtures / "takeout" / f"{n}.jpg").read_bytes())
+        side = fixtures / "takeout" / f"{n}.jpg.json"
+        if side.exists():
+            (work / f"{n}.jpg.json").write_bytes(side.read_bytes())
+    # poison 1: unreadable permissions (the audit's chmod-000 crash case)
+    locked = work / "locked.jpg"
+    locked.write_bytes((fixtures / "takeout" / "scene_00.jpg").read_bytes())
+    os.chmod(locked, 0o000)
+    # poison 2: valid extension, garbage content
+    corrupt = work / "corrupt.jpg"
+    corrupt.write_bytes(b"this is not a jpeg at all")
+
+    try:
+        counts = ingest.ingest_folder(conn, work)
+        assert counts["new"] == 3
+        assert counts["error"] == 2
+        errs = conn.execute("SELECT path, error, attempts FROM ingest_errors ORDER BY path").fetchall()
+        assert {Path(r["path"]).name for r in errs} == {"locked.jpg", "corrupt.jpg"}
+        assert all(r["attempts"] == 1 for r in errs)
+
+        # rerun: good files skip as unchanged, poison paths skip WITHOUT retry
+        counts2 = ingest.ingest_folder(conn, work)
+        assert counts2 == {"new": 0, "updated": 0, "skipped": 3, "error": 2}
+        errs2 = conn.execute("SELECT attempts FROM ingest_errors").fetchall()
+        assert all(r["attempts"] == 1 for r in errs2)  # not re-attempted
+
+        # retry_errors=True re-attempts: corrupt fails again (attempts=2),
+        # locked recovers once permissions are fixed
+        os.chmod(locked, 0o644)
+        counts3 = ingest.ingest_folder(conn, work, retry_errors=True)
+        assert counts3["new"] == 1  # locked.jpg recovered
+        assert counts3["error"] == 1  # corrupt.jpg still poison
+    finally:
+        os.chmod(locked, 0o644)

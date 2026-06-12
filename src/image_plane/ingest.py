@@ -195,6 +195,20 @@ def ingest_file(conn: sqlite3.Connection, path: Path, source: str) -> str:
     return "new"
 
 
+def _record_ingest_error(conn: sqlite3.Connection, path: Path, err: str) -> None:
+    """Upsert a poison-file row (LEE-559) so reruns can skip the path."""
+    now = dbmod.utcnow()
+    conn.execute(
+        """INSERT INTO ingest_errors (path, error, first_seen, last_seen)
+           VALUES (?, ?, ?, ?)
+           ON CONFLICT(path) DO UPDATE SET
+             error = excluded.error,
+             last_seen = excluded.last_seen,
+             attempts = attempts + 1""",
+        (str(path), err, now, now),
+    )
+
+
 def detect_source(folder: Path) -> str:
     """Takeout folders carry JSON sidecars; everything else is a plain export."""
     for p in folder.rglob("*.json"):
@@ -204,7 +218,11 @@ def detect_source(folder: Path) -> str:
 
 
 def ingest_folder(
-    conn: sqlite3.Connection, folder: Path, source: str = "auto", progress_every: int = 100
+    conn: sqlite3.Connection,
+    folder: Path,
+    source: str = "auto",
+    progress_every: int = 100,
+    retry_errors: bool = False,
 ) -> dict:
     folder = folder.expanduser().resolve()
     if not folder.is_dir():
@@ -222,11 +240,40 @@ def ingest_folder(
     if skipping_heic:
         log.warning("pillow-heif not installed: %d HEIC files will error", skipping_heic)
 
+    # LEE-559: paths that poisoned a previous run are skipped, not retried,
+    # so a permanently unreadable file can never wedge ingest in a crash loop.
+    # With retry_errors=True they are re-attempted, and a recovered file's
+    # poison row is cleared.
+    known_bad = {r["path"] for r in conn.execute("SELECT path FROM ingest_errors")}
+
+    skipped_bad = 0
     for i, path in enumerate(files, 1):
-        counts[ingest_file(conn, path, source)] += 1
+        if str(path) in known_bad and not retry_errors:
+            skipped_bad += 1
+            counts["error"] += 1
+            continue
+        try:
+            result = ingest_file(conn, path, source)
+        except Exception as e:  # one bad file must never kill the batch
+            log.warning("poison file, skipping (logged to ingest_errors): %s: %s", path, e)
+            _record_ingest_error(conn, path, f"{type(e).__name__}: {e}")
+            counts["error"] += 1
+        else:
+            if result == "error":
+                # unreadable image content — same containment as an exception
+                _record_ingest_error(conn, path, "unreadable image content")
+            elif str(path) in known_bad:
+                conn.execute("DELETE FROM ingest_errors WHERE path = ?", (str(path),))
+                log.info("previously-poisoned file recovered: %s", path)
+            counts[result] += 1
         if i % progress_every == 0:
             conn.commit()
             log.info("progress: %d/%d (%s)", i, len(files), counts)
     conn.commit()
+    if skipped_bad:
+        log.warning(
+            "%d previously-poisoned file(s) skipped without retry — "
+            "re-attempt with --retry-errors after fixing them", skipped_bad,
+        )
     log.info("done: %d files — %s", len(files), counts)
     return counts

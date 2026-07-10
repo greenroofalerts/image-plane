@@ -1,8 +1,14 @@
 # CURRENT_STATE.md — image-plane (LEE-411)
 
-**Last updated:** 2026-07-10 late eve (F1+F2 machine passes complete; canon trio RATIFIED by Lee's
-"go in new window, handover"; F2 CANDIDATE PASS + F3 READINESS chain hands to a fresh window
-via ~/leeos-private/HANDOVER-2026-07-10-IMAGE-PLANE-CANDIDATE-PASS.md).
+**Last updated:** 2026-07-10 night (F2 CANDIDATE PASS + F3 READINESS chain COMPLETE, Steps 1–4.
+Cluster sheets + ambiguous.html rebuilt WITH ranked provisional candidates — browser-curled;
+SPINELINE-READINESS.md written (228 READY / 10 NEEDS-RULE, orchestrator correction: all 7 "EXIF
+conflicts" are 2026-06-25 export artifacts → true NEEDS-RULE = 4 low-coverage roofs). Tie count
+held 8,111 → 8,111 (counts.py before/after — candidates quarantine-only, IP-L9).
+New quarantine files: grind/f2_candidates.json (v2; .v1 backup) + grind/f2_trello_quarantine.json
+(901 rows: 284 new refs vs the 419-map, 35 known refs w/ new postcode, source=trello).
+Trello swept for the first time: 49/49 boards, 3,450 cards; OR MAIN + Revival Main are the only
+job boards. F3 stays gated on Lee seeing SPINELINE-READINESS.md.)
 
 ## Corpus state (Counted by: `python3 ~/image-plane/counts.py --json` on Mini A, 2026-07-10 ~22:30)
 - 12,338 kept photos · **8,111 tied to a roof (66%)** · 4,227 not (3,528 with GPS, 699 without)
@@ -26,10 +32,12 @@ Lee's cluster answers → ties climb via the capture loop (no machine promotion 
 candidates — IP-L9).
 
 ## Next blocker
-1. Fresh window runs the ratified F2 CANDIDATE PASS + F3 READINESS chain (Steps 1–4) from
-   the handover; no tie count may increase; candidates quarantine-only.
-2. Lee's sheet answers (any window, dictation fine).
-3. F3 build (Trinity rollout to 238 roofs) gated on Lee seeing SPINELINE-READINESS.md.
+1. Lee answers the cluster sheets — now with ranked candidates as tap/say-able options
+   (http://192.168.178.61:8787/cluster-sheets-r1.html) — via the 2 Jul dictation →
+   ground-truth loop, unchanged. Ties advance ONLY through his answers.
+2. F3 build (Trinity rollout to 238 roofs) gated on Lee seeing docs/SPINELINE-READINESS.md
+   (incl. the export-artifact correction — proposed rule: EXIF stamped in the 2026-06 export
+   window = treat as missing, use path-date).
 
 ## Unrun/parked paths (honest)
 Full Drive doc read (204 indexed folders, pilot yield ~12%/ref, ~2M tokens — Lee's call);

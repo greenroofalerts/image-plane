@@ -76,6 +76,22 @@ gps_no_job = {p: gps_all[p] for p in unallocated_keeps if p in gps_all}
 job_coords = load_json(os.path.join(G, "job_coords.json"), {})
 coords = [(v["lat"], v["lon"]) for v in job_coords.values() if v.get("confidence") != "weak"]
 
+# --------------------------------------------------------------------------
+# 1b. F2 CANDIDATE PASS (2026-07-10 late) -- loaded here (not in section 7) because
+#     both cluster pages AND ambiguous.html need name resolution + candidate
+#     rendering. Sources are read-only quarantine files from Step 1+2 of the
+#     candidate-pass chain (f2_candidate_engine.py / f2_trello_sweep.py) -- this
+#     builder NEVER writes to them.
+# --------------------------------------------------------------------------
+site_names = load_json(os.path.join(G, "site_names.json"), {})
+gra_stories = load_json(os.path.join(G, "gra_stories.json"), {})
+f2_candidates = load_json(os.path.join(G, "f2_candidates.json"), {})
+f2_trello_quarantine = load_json(os.path.join(G, "f2_trello_quarantine.json"), {})
+xero_lines = load_json(os.path.join(G, "xero_invoice_lines_full.json"), [])
+trello_by_ref = {r["job_ref"]: r for r in f2_trello_quarantine.get("rows", []) if r.get("job_ref")}
+candidates_by_cluster = {c["cluster_id"]: c for c in f2_candidates.get("clusters", [])}
+candidates_by_amb_path = {a["path"]: a for a in f2_candidates.get("ambiguous_photos", [])}
+
 far = []
 for p, (pla, plo) in gps_no_job.items():
     bd = min(hav(pla, plo, la, lo) for la, lo in coords)
@@ -275,6 +291,10 @@ a { color:inherit; }
 .candidate { background:#181818; border-radius:8px; padding:10px 14px; }
 .candidate b { color:#dfe; }
 .candidate .addr { color:#9aa; font-size:13.5px; }
+.candidate .caveat { color:#e0c168; }
+.candidate-none { color:#9aa; }
+.candidate-none b { color:#9aa; }
+.zero-candidates { color:#dfe8df; font-style:italic; }
 .ask { background:#20191a; border-left:4px solid #e0c168; border-radius:0 6px 6px 0; padding:12px 14px; margin-top:12px; font-size:15px; }
 .ask b { color:#f0d68a; }
 .reprow { display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap; }
@@ -292,6 +312,185 @@ a { color:inherit; }
 
 os.makedirs(os.path.join(SV, "cluster_thumbs"), exist_ok=True)
 os.makedirs(os.path.join(SV, "ambiguous_thumbs"), exist_ok=True)
+
+# --------------------------------------------------------------------------
+# 5b. F2 candidate-pass rendering helpers (2026-07-10 late).
+#
+# Name resolution fallback chain (binding, per F2-CANDIDATE-PASS-SPEC-2026-07-10
+# STEP 3): candidate's own `label` if it's already a real name/postcode -> NEVER
+# accept the placeholder "Job NNN-NN (name unknown)" as a real label -> site_names
+# .json -> gra_stories.json -> Trello evidence card address (stripped of leading
+# ref + trailing person name) -> job_coords.json postcode-area -> (extra honesty
+# net, not in the original chain but required so we never render a bare code)
+# Xero invoice contact name -> final honest "no name or address on file".
+# --------------------------------------------------------------------------
+_PLACEHOLDER_RE = re.compile(r"^Job [\w\-]+ \(name unknown\)$")
+_UK_POSTCODE_RE = re.compile(r"\b[A-Z]{1,2}\d[A-Z0-9]?\s*\d[A-Z]{2}\b", re.I)
+_ADDRESS_WORDS = {
+    "house", "road", "rd", "street", "st", "lane", "ln", "way", "drive", "dr",
+    "court", "ct", "park", "close", "ave", "avenue", "farm", "cottage", "barn",
+    "lodge", "hall", "grange", "villa", "building", "mews", "gardens", "garden",
+    "terrace", "place", "pl", "grove", "rise", "view", "walk", "green", "croft",
+    "fold", "yard", "crescent", "square", "sq", "row", "end", "hill", "bridge",
+    "common", "fields", "field", "manor",
+}
+
+
+def _looks_like_person_name(seg):
+    words = [w for w in re.split(r"\s+", seg.strip()) if w]
+    if not (1 < len(words) <= 4):
+        return False
+    if re.search(r"\d", seg):
+        return False
+    if _UK_POSTCODE_RE.search(seg):
+        return False
+    lw = [re.sub(r"[^a-zA-Z]", "", w).lower() for w in words]
+    if any(w in _ADDRESS_WORDS for w in lw if w):
+        return False
+    return all(w[:1].isupper() for w in words if w)
+
+
+def derive_trello_address(card_name):
+    """Best-effort: 'NNNN-YY Address bits, Town, County POSTCODE, Person Name'
+    -> 'Address bits, Town' (drops postcode segment + trailing person name).
+    Heuristic, documented as such -- these are provisional candidates, never
+    written back anywhere."""
+    if not card_name:
+        return None
+    segs = [s.strip() for s in card_name.split(",") if s.strip()]
+    if not segs:
+        return None
+    # Strip leading numeric ref + an optional compound sub-ref suffix, e.g.
+    # "289-14-M Peter Elias" -> ref-strip must eat "289-14-M " as one unit, not
+    # just "289-14 ", or a stray "-M " fragment survives onto the remainder.
+    segs[0] = re.sub(r"^\s*\d{2,4}-\d{2}(?:-[A-Za-z])?\s*", "", segs[0]).strip()
+    if not segs[0]:
+        segs = segs[1:]
+    if not segs:
+        return None
+    # Pop trailing segments while they're EITHER postcode-bearing OR look like a
+    # person's name -- these interleave in real card names ("..., County POSTCODE,
+    # Person Name"), so a single combined loop is needed (two separate loops each
+    # only look at the current last segment once and miss the postcode segment
+    # once a trailing person-name segment is popped after it).
+    while len(segs) > 1 and (_UK_POSTCODE_RE.search(segs[-1]) or _looks_like_person_name(segs[-1])):
+        segs.pop()
+    if not segs:
+        return None
+    if len(segs) == 1:
+        # Single-segment card names (no commas) are either a real address/site
+        # nickname ("Cliffe/Firle/Hub - UoB") or just a contact's name with no
+        # address at all ("Peter Elias (Infinity Foods)"). Strip any trailing
+        # parenthetical aside before judging -- if the remaining core reads as a
+        # person's name, this card carries no usable address, so say so and let
+        # the caller fall through to the next fallback tier (job_coords, then a
+        # job-ref-wide Xero contact search) rather than showing a person's name
+        # dressed up as an address.
+        seg = segs[0]
+        core = re.sub(r"\s*\([^)]*\)\s*$", "", seg).strip() or seg
+        if _looks_like_person_name(core):
+            return None
+        return seg
+    if segs[0] == segs[-1]:
+        return segs[0]
+    return "%s, %s" % (segs[0], segs[-1])
+
+
+def resolve_job_display(job_ref, cand):
+    """Returns (display_string_plain_text, source_tag) for spot-check/audit."""
+    label = (cand.get("label") or "").strip()
+    if label and not _PLACEHOLDER_RE.match(label):
+        return label, "candidate_label"
+    sn = site_names.get(job_ref)
+    if sn and sn.get("name"):
+        return "%s (%s)" % (sn["name"], job_ref), "site_names"
+    gs = gra_stories.get(job_ref)
+    if gs and gs.get("site"):
+        nm = gs["site"].get("name") or gs["site"].get("address")
+        if nm:
+            return "%s (%s)" % (nm, job_ref), "gra_stories"
+    tr = trello_by_ref.get(job_ref)
+    if tr:
+        for ec in tr.get("evidence_cards", []):
+            addr = derive_trello_address(ec.get("card_name"))
+            if addr:
+                return "%s (%s)" % (addr, job_ref), "trello"
+    jc = job_coords.get(job_ref)
+    if jc:
+        site = (jc.get("site") or "").strip()
+        postcode = jc.get("postcode")
+        bits = [b for b in (site, postcode) if b]
+        if bits:
+            return "%s (%s)" % (" — ".join(bits), job_ref), "job_coords"
+    # Job-ref-wide Xero contact search (not gated to this specific candidate's
+    # own evidence_source -- if ANY invoice line for this job carries a contact
+    # name, use it; that's still more honest than a bare code, and the caller
+    # never treats it as more than "billed to").
+    contact = xero_contact_by_ref.get(job_ref)
+    if contact:
+        return "Job %s — billed to %s (address not on file)" % (job_ref, contact), "xero_contact"
+    return "Job %s — no name or address on file" % job_ref, "none"
+
+
+_RESOLVE_SOURCE_TALLY = {}
+xero_contact_by_ref = {}
+for _row in xero_lines:
+    _ref = _row.get("tracking_ref")
+    _contact = _row.get("contact")
+    if _ref and _contact and _ref not in xero_contact_by_ref:
+        xero_contact_by_ref[_ref] = _contact
+
+
+def render_evidence_sentence(cand):
+    raw = (cand.get("evidence_raw_text") or "").strip()
+    raw = (raw[0].upper() + raw[1:]) if raw else "Matches this date"
+    dist = cand.get("distance_km")
+    if dist is not None:
+        raw += (", %dm away" % round(dist * 1000)) if dist < 1 else (", %.1fkm away" % dist)
+    raw = raw.rstrip(".") + "."
+    out = html.escape(raw)
+    if cand.get("strength") == "weak-wide-window":
+        out += (
+            " <span class='caveat'>Possible but thin &mdash; this job was invoiced or "
+            "active on and off over a long stretch, so the date overlap may be "
+            "coincidence.</span>"
+        )
+    return out
+
+
+def render_candidate_options_html(cands):
+    """cands: list of up to 3 ranked candidate dicts from f2_candidates.json.
+    Returns an HTML block: numbered say-able options, last option ALWAYS
+    'None of these / other'. Returns None if cands is empty (caller renders
+    the zero-candidate message instead)."""
+    if not cands:
+        return None
+    items = []
+    for i, cand in enumerate(cands, start=1):
+        job_ref = cand["job_ref"]
+        display, src = resolve_job_display(job_ref, cand)
+        _RESOLVE_SOURCE_TALLY[src] = _RESOLVE_SOURCE_TALLY.get(src, 0) + 1
+        ev_sentence = render_evidence_sentence(cand)
+        items.append(
+            "<div class='candidate'><b>%d.</b> <b>%s</b><br><span class='addr'>%s</span></div>"
+            % (i, html.escape(display), ev_sentence)
+        )
+    last_n = len(cands) + 1
+    items.append(
+        "<div class='candidate candidate-none'><b>%d.</b> None of these / other &mdash; just say what it is.</div>"
+        % last_n
+    )
+    return "<div class='candidates'>%s</div>" % "".join(items)
+
+
+def render_zero_candidates_html(context):
+    msg = (
+        "No invoice or board activity matches this cluster&rsquo;s dates &mdash; dictate freely."
+        if context == "cluster"
+        else "No invoice or board activity matches this date &mdash; dictate freely."
+    )
+    return "<div class='candidates'><div class='candidate zero-candidates'>%s</div></div>" % msg
+
 
 # --------------------------------------------------------------------------
 # 6. Build cluster-01.html .. cluster-20.html + cluster-sheets-r1.html index
@@ -351,14 +550,24 @@ for ci, members in enumerate(top20, start=1):
     if total_n > 15:
         shown_note = "<p>Showing 15 of %d photos, spread across the whole date range.</p>" % total_n
 
+    cluster_entry = candidates_by_cluster.get(ci)
+    cluster_cands = cluster_entry["candidates"] if cluster_entry else []
+    if cluster_cands:
+        cand_block_html = render_candidate_options_html(cluster_cands)
+    else:
+        cand_block_html = render_zero_candidates_html("cluster")
+
     header_p = (
         "<p>These %d photos were taken close together on %d different days, "
-        "but they don&rsquo;t match any roof I have a location for. "
-        "Which roof or site is this? Job number or name &mdash; or say &lsquo;not a job&rsquo;.</p>"
-        "<p><b>How to answer:</b> just say it in any Claude window &mdash; "
-        "&ldquo;cluster %d is &lt;name or job number&gt;&rdquo; or &ldquo;cluster %d not a job&rdquo;. "
-        "Dictation is fine; I capture it from there.</p>"
-        % (total_n, n_days, ci, ci)
+        "but they don&rsquo;t match any roof I have a location for. Have a look at the "
+        "candidates below, worked out from invoices and the jobs board.</p>"
+        "<p><b>How to answer:</b> if one of the numbered options below is right, just say "
+        "its number in any Claude window &mdash; &ldquo;cluster %d is 2&rdquo;. If none of "
+        "them fit, say &ldquo;cluster %d is none of these&rdquo; and tell me what it actually "
+        "is, or give a name/job number outright &mdash; &ldquo;cluster %d is Litten "
+        "Path&rdquo; &middot; &ldquo;cluster %d not a job&rdquo;. Dictation is fine; I capture "
+        "it from there.</p>"
+        % (total_n, n_days, ci, ci, ci, ci)
     )
 
     page_html = """<!doctype html>
@@ -377,7 +586,7 @@ for ci, members in enumerate(top20, start=1):
 <div id="counts-footer-slot">%s</div>
 """ % (
         cnum, CSS, ci, total_n, fmt_date_human(date_lo), fmt_date_human(date_hi),
-        header_p, shown_note, "\n".join(rows_html), guards.counts_footer(),
+        header_p, cand_block_html, shown_note + "\n".join(rows_html), guards.counts_footer(),
     )
 
     out_path = os.path.join(SV, "cluster-%s.html" % cnum)
@@ -438,60 +647,18 @@ with open(os.path.join(G, "f2_cluster_answers_template.json"), "w") as f:
 print("\n=== Cluster pages built: cluster-sheets-r1.html + cluster-01..20.html ===")
 
 # --------------------------------------------------------------------------
-# 7. ambiguous.html
+# 7. ambiguous.html -- membership + candidates now come straight from
+#    f2_candidates.json's `ambiguous_photos` (Step 1+2 of the candidate-pass
+#    chain already derived this exact 33-photo set from the same
+#    f2_ambiguous_excluded*.json files -- verified identical path-set before
+#    this rewrite, see F2-CANDIDATE-PASS-SPEC-2026-07-10.md STEP 3).
 # --------------------------------------------------------------------------
-site_names = load_json(os.path.join(G, "site_names.json"), {})
-gra_stories = load_json(os.path.join(G, "gra_stories.json"), {})
-
-
-def resolve_candidate(job_ref):
-    """Returns (label_html, has_real_name: bool)."""
-    sn = site_names.get(job_ref)
-    if sn and sn.get("name"):
-        return "<b>%s</b> <span class='addr'>(job %s)</span>" % (html.escape(sn["name"]), html.escape(job_ref)), True
-    gs = gra_stories.get(job_ref)
-    if gs and gs.get("site"):
-        nm = gs["site"].get("name") or gs["site"].get("address")
-        if nm:
-            return "<b>%s</b> <span class='addr'>(job %s)</span>" % (html.escape(nm), html.escape(job_ref)), True
-    jc = job_coords.get(job_ref)
-    if jc:
-        site = (jc.get("site") or "").strip()
-        postcode = jc.get("postcode")
-        bits = [b for b in (site, postcode) if b]
-        if bits:
-            return "<b>Job %s</b> <span class='addr'>%s</span>" % (html.escape(job_ref), html.escape(" — ".join(bits))), True
-    return "<b>Job %s</b> <span class='addr'>(no address on file)</span>" % html.escape(job_ref), False
-
-
-# merge the three raw files by path, unioning candidates
-raw_files = ["f2_ambiguous_excluded.json", "f2_ambiguous_excluded_m3.json", "f2_ambiguous_excluded_m4.json"]
-merged = {}
-raw_total = 0
-for fn in raw_files:
-    rows = load_json(os.path.join(G, fn), [])
-    raw_total += len(rows)
-    for r in rows:
-        p = r["path"]
-        cands = r.get("candidates", [])
-        norm_cands = []
-        for c in cands:
-            if isinstance(c, (list, tuple)):
-                norm_cands.append(c[0])
-            else:
-                norm_cands.append(c)
-        entry = merged.setdefault(p, {"candidates": []})
-        for c in norm_cands:
-            if c not in entry["candidates"]:
-                entry["candidates"].append(c)
-
-unique_paths = sorted(merged.keys(), key=sort_key)
+unique_paths = sorted(candidates_by_amb_path.keys(), key=sort_key)
 print("\n=== Ambiguous sweep ===")
-print("raw rows across 3 files: %d, unique photos after dedupe: %d" % (raw_total, len(unique_paths)))
+print("unique photos (from f2_candidates.json ambiguous_photos): %d" % len(unique_paths))
 
 amb_rows_html = []
-name_gaps = 0
-letters = "ABCDEFGHIJ"
+zero_cand_count = 0
 for n, p in enumerate(unique_paths, start=1):
     dest = os.path.join(SV, "ambiguous_thumbs", "%03d.jpg" % n)
     ok, why = make_thumb(p, dest)
@@ -502,16 +669,18 @@ for n, p in enumerate(unique_paths, start=1):
     cap = guards.caption({"path": p, "job_ref": None})
     cap_html = cap.render_html()
 
-    cands = merged[p]["candidates"]
-    cand_html = []
-    letter_map = []
-    for i, c in enumerate(cands):
-        label_html, has_name = resolve_candidate(c)
-        if not has_name:
-            name_gaps += 1
-        letter = letters[i] if i < len(letters) else str(i + 1)
-        letter_map.append(letter)
-        cand_html.append("<div class='candidate'><b>%s.</b> %s</div>" % (letter, label_html))
+    amb_cands = candidates_by_amb_path[p].get("candidates", [])
+    if amb_cands:
+        cand_block_html = render_candidate_options_html(amb_cands)
+        last_n = len(amb_cands) + 1
+        ask = (
+            "<div class='ask'><b>Which one is this?</b> Say the number &mdash; 1 to %d &mdash; "
+            "or say &lsquo;%d&rsquo; for none of these / other.</div>" % (len(amb_cands), last_n)
+        )
+    else:
+        zero_cand_count += 1
+        cand_block_html = render_zero_candidates_html("ambiguous")
+        ask = ""
 
     if ok:
         img_rel = "ambiguous_thumbs/%03d.jpg" % n
@@ -523,10 +692,6 @@ for n, p in enumerate(unique_paths, start=1):
     else:
         photo_html = "<div class='missing'>Photo file not currently on this machine (%s)</div>" % html.escape(why)
 
-    ask = "<div class='ask'><b>Which one is this?</b> %s &mdash; or say &lsquo;neither&rsquo;.</div>" % (
-        " / ".join(letter_map)
-    )
-
     amb_rows_html.append(
         "<div class='row' id='amb-%d'>"
         "<div class='rowhead'><span class='badge'>%d</span>"
@@ -534,25 +699,27 @@ for n, p in enumerate(unique_paths, start=1):
         "%s"
         "<div class='filename'>%s</div>"
         "%s"
-        "<div class='candidates'>%s</div>"
+        "%s"
         "%s"
         "</div>"
         % (n, n, html.escape(d_h), html.escape(t_h), photo_html, html.escape(fname), cap_html,
-           "".join(cand_html), ask)
+           cand_block_html, ask)
     )
 
 amb_html = """<!doctype html>
 <meta charset="utf-8">
-<title>Ambiguous photos -- which roof, A or B?</title>
+<title>Ambiguous photos -- which roof is it?</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>%s</style>
 <div class="wrap">
 <div class="banner">
   <h1>%d photos caught between two or more neighbouring roofs</h1>
   <p>Each of these sits close to more than one roof address, so the computer can&rsquo;t pick
-  one safely. Say which one it actually is, or &lsquo;neither&rsquo;.</p>
+  one safely. Have a look at the candidates below each photo, worked out from invoices and
+  the jobs board.</p>
   <p><b>How to answer:</b> by the photo numbers, in any Claude window &mdash;
-  &ldquo;ambiguous 3 is A&rdquo; &middot; &ldquo;ambiguous 9 neither&rdquo;. Dictation is fine.</p>
+  &ldquo;ambiguous 3 is 1&rdquo; &middot; &ldquo;ambiguous 9 is none of these&rdquo;.
+  Dictation is fine.</p>
 </div>
 %s
 </div>
@@ -562,7 +729,8 @@ amb_html = """<!doctype html>
 with open(os.path.join(SV, "ambiguous.html"), "w") as f:
     f.write(amb_html)
 
-print("name resolution gaps (candidate with no name anywhere): %d" % name_gaps)
+print("ambiguous photos with zero candidates (say so plainly, dictate freely): %d" % zero_cand_count)
+print("name resolution source tally (cluster + ambiguous candidates):", _RESOLVE_SOURCE_TALLY)
 
 # --------------------------------------------------------------------------
 # 8. Thumbnail verification summary

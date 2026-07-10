@@ -6,14 +6,58 @@ outrank every summary, report, and handover. Newest at top.
 
 ## 2026-07-10
 
-- **F2 CANDIDATE PASS + F3 READINESS mandate ratified** (late eve): Lee issued the
-  four-step build order (dates↔invoices candidate engine → Trello sweep → sheets rebuilt
-  with tap/say-able candidates → spineline readiness audit; candidates provisional, NEVER
-  promoted without Lee; no tie count may increase; F3 gated on Lee seeing
-  SPINELINE-READINESS.md), then ratified the staged canon trio and ordered execution:
-  "go in new window, handover". Full order verbatim in
-  ~/leeos-private/HANDOVER-2026-07-10-IMAGE-PLANE-CANDIDATE-PASS.md — the executing window
-  copies it here on pickup.
+- **F2 CANDIDATE PASS + F3 READINESS mandate — Lee's order VERBATIM** (late eve; ratified
+  with "go in new window, handover"; copied here on pickup by the executing window,
+  2026-07-10, per the handover's first-act instruction):
+
+  > IMAGE-PLANE — F2 CANDIDATE PASS + F3 SPINELINE READINESS
+  >
+  > BUILD PREFLIGHT (print before any code):
+  > Source of truth: job_coords.json + ground-truth file + Xero invoice dates + Trello boards
+  > + photo EXIF. Runtime can know: dates, geocodes, job refs, tie evidence. Evidence tiers:
+  > confirmed ties = validated; date-intersection candidates = provisional, NEVER promoted
+  > without Lee's answer. Files allowed: sheet builder, new candidate scripts in
+  > ~/image-plane/, docs. Forbidden: ground-truth file (append-only via capture loop only),
+  > counts.py logic, guards, anything in GRA/Glenross. Stop wall: 3 fails on any step = STOP.
+  >
+  > STEP 1 — DATES ↔ INVOICES CANDIDATE ENGINE. For each of the 20 mystery clusters and the
+  > 33 ambiguous photos: take the cluster's photo-date span, query Xero invoice/visit dates
+  > (local data already mined) for jobs active in that window ±14 days, intersect with GPS
+  > proximity where the cluster has coordinates. Output per cluster: ranked candidate list
+  > (max 3) with the evidence line for each ("invoiced 12–18 Mar 2022, 0.4km from cluster
+  > centroid"). Candidates are provisional. No tie is written. Quarantine file, not the map.
+  >
+  > STEP 2 — TRELLO SWEEP. The boards are the canonical job record and were never checked.
+  > Pull cards, extract job refs + addresses + dates, geocode postcodes, diff against the
+  > 419-job map. New addresses land in quarantine with source=trello. Then re-run Step 1
+  > scoring with Trello dates included. Report yield honestly, including zero if that's the
+  > truth.
+  >
+  > STEP 3 — REBUILD THE SHEETS WITH CANDIDATES. Each cluster page now opens with its ranked
+  > candidates as tap/say-able options ("1. Litten Path — invoiced that week, 0.4km. 2. …
+  > 3. None of these / other") with the evidence line under each, keeping free dictation as
+  > the fallback. Operator language only — no source enums, no scores in raw form. Same
+  > ground-truth capture path as 2 July, unchanged.
+  >
+  > STEP 4 — F3 SPINELINE READINESS AUDIT (read-only, no F3 build). For each of the 238 roofs
+  > with photos: sort photos by EXIF timestamp; count photos missing EXIF; flag any roof where
+  > EXIF order contradicts album/filename order or known visit dates. Output
+  > SPINELINE-READINESS.md: per roof — photo count / % with usable timestamps /
+  > order-conflict flags / READY or NEEDS-RULE. Propose (do not implement) the fallback
+  > ordering rule for NEEDS-RULE roofs. F3 does not start until Lee has seen this file.
+  >
+  > FINAL REPORT, separated tiers, each YES/NO with reason: code exists / guard passed /
+  > tests passed / browser proven (sheets curl-checked with candidate blocks rendering) /
+  > live proven / data-truth proven (candidate evidence lines spot-checked against 5 real
+  > Xero rows and 5 real Trello cards, quoted). Plus ledger checked / rules applied / new
+  > entries / files touched / forbidden untouched / commit hash / unresolved walls. DONE only
+  > if sheets render with candidates in the browser; otherwise "code shipped, not verified".
+  > No tie count may increase this run — attribution advances only through Lee's answers.
+  >
+  > Cherny per-step X/100, Chain Y/100 self-gate header; rewrite if <97.
+
+  Ratification words: "go in new window, handover". Source handover:
+  ~/leeos-private/HANDOVER-2026-07-10-IMAGE-PLANE-CANDIDATE-PASS.md.
 
 - **Every Lee surface states what Lee should DO** (late eve, on opening
   verdicts.html cold): "ive opened that verdicts and have no idea what you

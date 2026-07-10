@@ -1,7 +1,6 @@
 # docs/CANONICAL-BUILD-CONTEXT.md — image-plane (LEE-411) canonical-docs manifest
 
-**Status:** DRAFT — staged 2026-07-10 late eve in response to Lee's F2-candidate-pass order,
-which required this file and found it missing. Becomes canonical on Lee's ratification.
+**Status:** CANONICAL — staged 2026-07-10 late eve, ratified same night by Lee's "go in new window, handover".
 **Owner:** Lee.
 
 Standing rule (cross-repo, from the Glengarry manifest): every Lee-owned repo gets its own

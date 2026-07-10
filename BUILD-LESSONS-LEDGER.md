@@ -1,6 +1,6 @@
 # BUILD-LESSONS-LEDGER.md — image-plane (LEE-411) repo-local standing lessons
 
-DRAFT — staged 2026-07-10, becomes canonical on Lee's ratification. Repo-local lessons
+CANONICAL — staged 2026-07-10, ratified same night by Lee's "go". Repo-local lessons
 (IP-Lnn), each born from a real incident. Cross-repo lessons live in
 `~/processpnlv2/docs/BUILD-LESSONS-LEDGER.md`.
 

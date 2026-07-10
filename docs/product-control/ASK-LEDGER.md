@@ -6,6 +6,15 @@ outrank every summary, report, and handover. Newest at top.
 
 ## 2026-07-10
 
+- **F2 CANDIDATE PASS + F3 READINESS mandate ratified** (late eve): Lee issued the
+  four-step build order (dates↔invoices candidate engine → Trello sweep → sheets rebuilt
+  with tap/say-able candidates → spineline readiness audit; candidates provisional, NEVER
+  promoted without Lee; no tie count may increase; F3 gated on Lee seeing
+  SPINELINE-READINESS.md), then ratified the staged canon trio and ordered execution:
+  "go in new window, handover". Full order verbatim in
+  ~/leeos-private/HANDOVER-2026-07-10-IMAGE-PLANE-CANDIDATE-PASS.md — the executing window
+  copies it here on pickup.
+
 - **Every Lee surface states what Lee should DO** (late eve, on opening
   verdicts.html cold): "ive opened that verdicts and have no idea what you
   want from me / are yiou still working on this under preagreed protocols and

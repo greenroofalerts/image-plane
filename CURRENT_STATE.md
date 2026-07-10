@@ -1,8 +1,8 @@
 # CURRENT_STATE.md — image-plane (LEE-411)
 
-**Last updated:** 2026-07-10 late eve (F1+F2 machine passes complete; F2 candidate pass
-ordered by Lee and STOPPED at the canon-doc gate pending his ratification of the manifest
-pair). DRAFT until Lee ratifies the canon set.
+**Last updated:** 2026-07-10 late eve (F1+F2 machine passes complete; canon trio RATIFIED by Lee's
+"go in new window, handover"; F2 CANDIDATE PASS + F3 READINESS chain hands to a fresh window
+via ~/leeos-private/HANDOVER-2026-07-10-IMAGE-PLANE-CANDIDATE-PASS.md).
 
 ## Corpus state (Counted by: `python3 ~/image-plane/counts.py --json` on Mini A, 2026-07-10 ~22:30)
 - 12,338 kept photos · **8,111 tied to a roof (66%)** · 4,227 not (3,528 with GPS, 699 without)
@@ -26,9 +26,8 @@ Lee's cluster answers → ties climb via the capture loop (no machine promotion 
 candidates — IP-L9).
 
 ## Next blocker
-1. Lee ratifies the canon pair (this file + manifest + lessons ledger) — then his ordered
-   F2 CANDIDATE PASS + F3 READINESS chain runs (Steps 1–4: dates↔invoices candidate engine,
-   Trello sweep, sheets rebuilt with candidates, spineline readiness audit).
+1. Fresh window runs the ratified F2 CANDIDATE PASS + F3 READINESS chain (Steps 1–4) from
+   the handover; no tie count may increase; candidates quarantine-only.
 2. Lee's sheet answers (any window, dictation fine).
 3. F3 build (Trinity rollout to 238 roofs) gated on Lee seeing SPINELINE-READINESS.md.
 

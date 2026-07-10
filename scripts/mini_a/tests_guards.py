@@ -103,27 +103,36 @@ def test_render_species_name_refuses_mismatched_refimage():
 
 
 def test_unknown_species_gets_loud_placeholder_and_is_logged():
-    needing_path = guards.SPECIES_NEEDING_EXEMPLAR_PATH
-    before = []
-    if os.path.exists(needing_path):
+    import tempfile, os as _os
+    _orig_qpath = guards.SPECIES_NEEDING_EXEMPLAR_PATH
+    _tmpq = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
+    _tmpq.write("[]"); _tmpq.close()
+    guards.SPECIES_NEEDING_EXEMPLAR_PATH = _tmpq.name
+    try:
+        needing_path = guards.SPECIES_NEEDING_EXEMPLAR_PATH
+        before = []
+        if os.path.exists(needing_path):
+            import json
+            before = json.load(open(needing_path))
+        marker_name = "Zzz Test Species Never Seeded 20260710"
+        ref = guards.species_ref(marker_name)
+        assert ref.placeholder is True, "unseeded species must come back as a placeholder RefImage"
+        out = guards.render_species_name(marker_name, ref)
+        assert "NO REFERENCE IMAGE" in out, "placeholder markup must be loud, got: %s" % out
         import json
-        before = json.load(open(needing_path))
-    marker_name = "Zzz Test Species Never Seeded 20260710"
-    ref = guards.species_ref(marker_name)
-    assert ref.placeholder is True, "unseeded species must come back as a placeholder RefImage"
-    out = guards.render_species_name(marker_name, ref)
-    assert "NO REFERENCE IMAGE" in out, "placeholder markup must be loud, got: %s" % out
-    import json
-    after = json.load(open(needing_path))
-    names_after = {row["name"] for row in after}
-    assert marker_name in names_after, "unknown species name must be logged to species_needing_exemplar.json"
-    assert len(after) == len(before) or marker_name not in {r["name"] for r in before}, "dedup check setup sane"
-    # re-request must not duplicate the entry
-    guards.species_ref(marker_name)
-    after2 = json.load(open(needing_path))
-    count_marker = sum(1 for r in after2 if r["name"] == marker_name)
-    assert count_marker == 1, "species_needing_exemplar.json must dedupe by name, found %d entries" % count_marker
+        after = json.load(open(needing_path))
+        names_after = {row["name"] for row in after}
+        assert marker_name in names_after, "unknown species name must be logged to species_needing_exemplar.json"
+        assert len(after) == len(before) or marker_name not in {r["name"] for r in before}, "dedup check setup sane"
+        # re-request must not duplicate the entry
+        guards.species_ref(marker_name)
+        after2 = json.load(open(needing_path))
+        count_marker = sum(1 for r in after2 if r["name"] == marker_name)
+        assert count_marker == 1, "species_needing_exemplar.json must dedupe by name, found %d entries" % count_marker
 
+    finally:
+        guards.SPECIES_NEEDING_EXEMPLAR_PATH = _orig_qpath
+        _os.unlink(_tmpq.name)
 
 def test_seeded_species_renders_real_ref_image():
     ref = guards.species_ref("sycamore")

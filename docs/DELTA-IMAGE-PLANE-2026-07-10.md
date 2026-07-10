@@ -321,7 +321,7 @@ are covering it), flash-card decks (Lee pinned), LEE-567 camera ingest (worth ra
   4 disobedience flags (D1–D4), all cheaper than construction.
 - **Cost**: ~3.6M tokens this run (~3.4M on sonnet extraction/clustering/evidence agents,
   remainder Fable orchestration + verification).
-- **Commit**: recorded in the follow-up commit note below.
+- **Commit**: `95c6367fb71fc13fcb0512c9a2730909033eb713` (this doc; hash stamped in a follow-up commit).
 - **STOP**: per the brief, nothing in Part 3 runs until Lee reads this and says go.
 
 *Fable this run: scoping, briefs, artefact verification (Mini A/spine/portal/Trinity page),

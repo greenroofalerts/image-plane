@@ -6,6 +6,17 @@ outrank every summary, report, and handover. Newest at top.
 
 ## 2026-07-10
 
+- **Every Lee surface states what Lee should DO** (late eve, on opening
+  verdicts.html cold): "ive opened that verdicts and have no idea what you
+  want from me / are yiou still working on this under preagreed protocols and
+  pathways to attributkon or not?" → Ruling: an answer sheet is not ready for
+  Lee unless it states, on the page, how to answer and that it feeds the
+  pre-agreed dictation→ground-truth loop (2 Jul contact-sheet protocol —
+  which remains THE attribution pathway, unchanged). Rendering, sizes and
+  language passing is not an operator pass; "does Lee know what to do next"
+  is the test. Guard: how-to-answer blocks now built into build_f2_phaseL.py
+  headers (all three surfaces), not pasted into HTML.
+
 - **Full-source rule for location evidence** (eve window, mid-F2, after an
   agent declared 413 jobs "no evidence" from folder names + invoice text
   only): "why are you only looking in folder names? there are dociuments in

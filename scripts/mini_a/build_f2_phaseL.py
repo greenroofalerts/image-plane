@@ -355,7 +355,10 @@ for ci, members in enumerate(top20, start=1):
         "<p>These %d photos were taken close together on %d different days, "
         "but they don&rsquo;t match any roof I have a location for. "
         "Which roof or site is this? Job number or name &mdash; or say &lsquo;not a job&rsquo;.</p>"
-        % (total_n, n_days)
+        "<p><b>How to answer:</b> just say it in any Claude window &mdash; "
+        "&ldquo;cluster %d is &lt;name or job number&gt;&rdquo; or &ldquo;cluster %d not a job&rdquo;. "
+        "Dictation is fine; I capture it from there.</p>"
+        % (total_n, n_days, ci, ci)
     )
 
     page_html = """<!doctype html>
@@ -414,6 +417,12 @@ index_html = """<!doctype html>
   <p>These are photos with a GPS position, taken close together in time and place, more than
   2km from any roof address on file. Grouped into the 20 biggest clusters &mdash; open each one
   and say which roof or site it is, or that it isn&rsquo;t a job at all.</p>
+  <p><b>What I need from you:</b> open each group, glance at the photos, and just tell me
+  &mdash; out loud or typed, in any Claude window, in any order, as few or as many as you like:
+  &ldquo;cluster 4 is Litten Path&rdquo; &middot; &ldquo;cluster 7 not a job&rdquo; &middot;
+  &ldquo;cluster 12 is 1479-21&rdquo;. That&rsquo;s the whole job &mdash; same dictation loop as
+  the photo rounds you&rsquo;ve done before. I capture your words as ground truth and the photos
+  get filed to their roofs. Nothing here needs typing into a form.</p>
 </div>
 %s
 </div>
@@ -542,6 +551,8 @@ amb_html = """<!doctype html>
   <h1>%d photos caught between two or more neighbouring roofs</h1>
   <p>Each of these sits close to more than one roof address, so the computer can&rsquo;t pick
   one safely. Say which one it actually is, or &lsquo;neither&rsquo;.</p>
+  <p><b>How to answer:</b> by the photo numbers, in any Claude window &mdash;
+  &ldquo;ambiguous 3 is A&rdquo; &middot; &ldquo;ambiguous 9 neither&rdquo;. Dictation is fine.</p>
 </div>
 %s
 </div>

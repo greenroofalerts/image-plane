@@ -164,9 +164,10 @@ None of these contradict a confirmed ask; they are unproven attributions, not er
 
 ## PART 2 — WHAT EXISTS (checked against the artefact, today)
 
-Corpus baseline (disk-verified 8–10 Jul): ledger 16,426 · keeps 12,338 · drops 3,203 ·
-quarantine 885 · allocated 7,099 (58% of keeps) · knowledge_notes 235 rows
-(sha256 87ee47a6…f14d480, matching the 8 Jul record — nothing lost since).
+Corpus baseline (recounted by query 2026-07-10 09:17 — see CORRECTION below): ledger 16,426 ·
+keeps 12,338 · drops 3,203 · quarantine 885 · **allocated keeps 6,563 (53%)** — allocation_v2
+holds 7,099 rows but 269 are excluded, 82 carry no job ref and 185 aren't keeps ·
+knowledge_notes 235 rows (sha256 87ee47a6…f14d480, matching the 8 Jul record — nothing lost).
 
 **BUILT AND PROVEN** (artefact + real run/click/row seen):
 
@@ -205,7 +206,7 @@ quarantine 885 · allocated 7,099 (58% of keeps) · knowledge_notes 235 rows
 
 | Ask | Built | Missing |
 |---|---|---|
-| A5 exhaustive allocation | 7,099 of 12,338 keeps allocated (58%) | ~5,200 keeps homeless; 163 undated residue; 411 "keep" rows point at paths missing on disk (kept_missing_on_disk.json — awaiting Lee look) |
+| A5 exhaustive allocation | 6,563 of 12,338 keeps allocated (53%, recounted 10 Jul) | 5,775 keeps homeless: 4,966 have GPS but no matched job · 809 lack coordinates · 407 of them also missing on disk (kept_missing_on_disk.json — awaiting Lee look) |
 | A22 record pages (rollout) | Trinity page proven; 153 job pages exist but in the OLD site-view format, not the record-page format | per-roof record pages for every roof; "earned handover product" |
 | A62 names-not-codes | site_names.json seeded (7 names) + rule canon | coverage across all 153 job pages/sheets; join file is thin |
 | A36 end-uses delivered | search layer 91% + record page + plant loop exist | most end-uses (triage in GRA, project packs, before/after surfaces) have no surface yet |
@@ -265,11 +266,16 @@ skill updated. Depends on: nothing. Cost: ~100k tokens, no Lee time.
 Seen by: next sheet on the hub carries exemplar pictures and a counts footer.
 
 **F2 — Finish allocation (A5).** The single biggest unblock — record pages, search, packs all
-sit on it. Involves: machine passes for the ~5,200 homeless keeps (GPS-neighbour, album joins,
-filename-order pass for the 163 undated), then carousel sheets for the residue; resolve the 411
-missing-on-disk rows. Depends on: F1 (sheets carry the new guards). Cost: grind is free (local
-qwen); orchestration ~500k–1M tokens; Lee answers residue sheets at his pace.
-Seen by: hub index shows "X of 12,338 allocated" climbing to ~100% with the honest counter.
+sit on it. True scope (recounted 10 Jul): **5,775 homeless keeps** — 4,966 already carry GPS,
+so expanding the geocoded job map is the main lever; 809 lack coordinates (album joins,
+filename-order pass); 407 also missing on disk (Lee look). First step inside F2: one canonical
+`counts.py` on Mini A that derives allocated-keeps/homeless from the join (never the row
+count), plus mark the 269 excluded + 82 no-ref rows so allocation_v2 can't be misread again —
+that makes the D2 breach impossible at the data layer, not just at the gate. Also quantify the
+takeout rows with no iCloud twin (the two-ledger overlap has never been counted). Depends on:
+F1 (sheets carry the new guards). Cost: grind is free (local qwen); orchestration ~500k–1M
+tokens; Lee answers residue sheets at his pace.
+Seen by: hub index shows "X of 12,338 allocated" climbing, sourced live from counts.py.
 
 **F3 — Record pages for every roof (A22), then the GRA swap (A28/LEE-633).**
 Involves: per-roof record JSON published from the pipeline; Trinity template applied to the
@@ -309,7 +315,51 @@ are covering it), flash-card decks (Lee pinned), LEE-567 camera ingest (worth ra
 
 ---
 
-## RECEIPT
+## CORRECTION + RE-RANK — 2026-07-10 (same day, after Lee challenged the numbers)
+
+Lee flagged that he'd been told "21,500 unallocated" repeatedly while this report said ~5,200.
+Recount run 2026-07-10 09:17, query: python join over `classified.jsonl` +
+`grind/allocation_v2.jsonl` + `geolocations.jsonl` + `takeout_ledger_merged.jsonl` +
+`grind/kept_missing_on_disk.json` on Mini A. Raw numbers:
+
+```
+icloud_ledger 16,426 (keep 12,338 · drop 3,203 · quarantine 885)
+takeout_ledger 5,054 → both-ledgers sum 21,480 (overlap never deduped across ledgers)
+allocation_v2 7,099 rows = 6,748 live-with-job-ref (6,585 icloud + 163 takeout)
+                          + 269 excluded + 82 live-without-job-ref
+allocated keeps 6,563 (53.2% of keeps)
+UNALLOCATED KEEPS 5,775 — 4,966 gps-but-no-job · 809 no-coords · 407 also missing on disk
+unallocated whole icloud ledger (any verdict) 9,841
+```
+
+**Both prior claims were false.**
+- "21,500 unallocated" was never true at any date: 21,480 is the SUM of the two ledgers with
+  the iCloud/takeout overlap double-counted. It entered circulation as "~21,500 photos
+  described" (`IMAGE-PLANE-END-USES-2026-06-30.md` line 6, which itself said ~16,000
+  unallocated at the time) and as "~21.5k roof photos" in the skill header — a corpus-size
+  figure that kept being repeated in allocation contexts until it read as the unallocated count.
+- "~5,200 homeless" (this report, original lines 168/208/268) was also false: it was
+  12,338 − 7,099, treating allocation_v2's ROW COUNT — copied from the 4 Jul memory line
+  "allocation total 7,043→7,099" via the evidence sheet — as if every row were an allocated
+  keep. 269 excluded rows, 82 no-ref rows and 185 non-keep paths were never subtracted. True
+  figure: 5,775. Same failure class both times: a number copied forward instead of queried.
+
+**Guard built and proven same day (machine-wide):** `~/.claude/hooks/receipt_gate.py` now
+enforces — any count in a completion claim requires a `Counted by:` line naming the query, and
+the named query must match a tool call that actually ran in that session. Tested with synthetic
+stop events: stale number without the line → BLOCKED (exit 2); a named query that never ran →
+BLOCKED; fresh count with real query → passes; hashes/dates don't false-trigger. Test cases:
+scratchpad `gate_test_*.jsonl` outputs, logged in `~/.claude/hooks/receipt_gate.log`.
+
+**Re-rank verdict:** the F1→F8 order STANDS — 5,775 vs 5,200 changes magnitude (+11%), not
+ranking; allocation remains the biggest unblock. What changed inside the plan: F1's counts
+guard is now DELIVERED (this correction); F2 gains three subtasks — canonical `counts.py` as
+the single source every report must quote, marking excluded/no-ref rows so allocation_v2 can't
+be misread, and quantifying the never-counted takeout/iCloud overlap; F2's lever is now known
+to be the job map (4,966 of the homeless already have GPS). F3–F8 unchanged.
+
+The affected lines in Parts 2–3 above have been corrected in place; the original false values
+are preserved verbatim in this section and in the pre-correction commit `95c6367`.
 
 - **Records read**: 129 session files in `~/.claude/projects/-Users-Lee/` scanned; 115
   keyword-matched sessions read completely (1,658 Lee messages); 14 non-matching sessions not

@@ -521,4 +521,28 @@ def _render_counts_data(data):
     if top_ts:
         lines.append("<span class='counted-at'>as of %s</span>" % html.escape(str(top_ts)))
 
-    return "<br>".join(lines) if lines else "counts.py returned no fields"
+    if not lines:
+        return "counts.py returned no fields"
+
+    # One-glance rule (Lee, via COMPASS #8): the footer leads with ONE plain
+    # line; the full per-field queries stay present but behind a tap. The
+    # summary line itself still comes from the same live data, never cached.
+    def _val(k):
+        v = data.get(k)
+        if isinstance(v, dict):
+            return v.get("value", v.get("count"))
+        return v
+    kept = _val("kept") or _val("kept_photos")
+    tied = _val("allocated_keeps")
+    roofs = _val("roofs_with_tied_photos")
+    summary_bits = []
+    if tied is not None and kept:
+        summary_bits.append("%s of %s photos tied to a roof" % (tied, kept))
+    if roofs is not None:
+        summary_bits.append("%s roofs have photos" % roofs)
+    ts = top_ts or ""
+    summary = " &middot; ".join(summary_bits) if summary_bits else "live corpus counts"
+    if ts:
+        summary += " <span class='counted-at'>(counted live %s)</span>" % html.escape(str(ts))
+    return ("%s<details><summary>How these numbers were counted</summary>%s</details>"
+            % (summary, "<br>".join(lines)))

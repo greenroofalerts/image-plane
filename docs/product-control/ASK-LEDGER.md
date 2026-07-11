@@ -6,6 +6,10 @@ outrank every summary, report, and handover. Newest at top.
 
 ## 2026-07-11
 
+- **Grid + short headers APPROVED, all sites** (night, verbatim): "looka good apply
+  to all sites" — Lee's glance on 1124-19 + 301-14 = operator approval of the F6B
+  layout; it applies to every roof page by construction (shared template), proven by
+  a same-turn sweep of all 246 pages (200, grid present, zero £).
 - **Repo view layout corrected: grid + short headers** (night, verbatim): "if i
   didnt make it clear these need to be ghrouped by phase/billable event, the phase
   shopuld have grid of images 5 wide - the short descriptor of the event not the

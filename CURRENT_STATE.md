@@ -10,9 +10,18 @@ New quarantine files: grind/f2_candidates.json (v2; .v1 backup) + grind/f2_trell
 Trello swept for the first time: 49/49 boards, 3,450 cards; OR MAIN + Revival Main are the only
 job boards. F3 stays gated on Lee seeing SPINELINE-READINESS.md.)
 
-## Corpus state (Counted by: `python3 ~/image-plane/counts.py --json` on Mini A, 2026-07-10 ~22:30)
-- 12,338 kept photos · **8,111 tied to a roof (66%)** · 4,227 not (3,528 with GPS, 699 without)
-- 238 roofs have tied photos · job map `grind/job_coords.json` = 419 refs
+## Corpus state (Counted by: `python3 ~/image-plane/counts.py --json` on Mini A, 2026-07-11 midday)
+- 12,338 kept photos · **8,224 tied to a roof (67%)** · 4,114 not (3,415 with GPS, 699 without)
+- **242 roofs** have tied photos · job map `grind/job_coords.json` = 419 refs
+- First Lee-answer promotion 11 Jul: +113 ties via cluster answers (Tony Whitbread 1156-20,
+  Spyways 885-18, Royal Holloway 1103-19, Bannut House 1688-24), applied from
+  grind/f2_confirmed_ties_staged.jsonl after verification; allocation backup
+  allocation_v2.jsonl.bak_pre_f2answers_20260711. Cluster answers captured:
+  grind/cluster-answers-raw-dictation.txt + cluster-answers-interpreted.json;
+  knowledge_notes 235→388 rows (backup .pre_f2clusters_20260711).
+- DO NOT rebuild the cluster sheets until Lee finishes answering (17 + 19 open) —
+  a rebuild renumbers clusters mid-conversation. Not-a-job cluster exits (6,8,9,10,16,18;
+  157 photos) staged in the same file, consumed at next rebuild.
 - Map sources: portfolio 148 · known_entities 151 · gmail 43 · xero_contact 29 · gra 22+7 ·
   drive-folder-names 9 · site-facts 9 · xero-desc 1
 

@@ -6,6 +6,19 @@ outrank every summary, report, and handover. Newest at top.
 
 ## 2026-07-11
 
+- **Repo view layout corrected: grid + short headers** (night, verbatim): "if i
+  didnt make it clear these need to be ghrouped by phase/billable event, the phase
+  shopuld have grid of images 5 wide - the short descriptor of the event not the
+  bill eg site phase | RoofCare Spr 23 | Irrigation repairs July 24 etc" → each
+  event group renders its photos as a 5-wide thumbnail grid; group header = SHORT
+  event descriptor (phase + compact date, e.g. "RoofCare Spr 23"), never the
+  invoice dump; the Xero refs stay available but tucked below/behind the header.
+- **Groups distinguish the billing company** (night, verbatim): "should be able to
+  distinguish ebtweenbilled by OR and billed by GRR and grouped accordingly - OR
+  install, GRR maintenance on same roof etc" → every billed window shows OR or
+  GRR (from invoice tenant; both = "OR + GRR"); unbilled visit windows carry no
+  company marker.
+
 - **Customer visibility rule made permanent** (late eve, verbatim): "the photos will
   opnly evefr be visible via the GRA site page" → THE GRA SITE PAGE IS THE ONLY
   CUSTOMER-VISIBLE PHOTO SURFACE, EVER. The Mini A pages (flip surface, site views)

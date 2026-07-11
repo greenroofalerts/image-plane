@@ -722,9 +722,37 @@ tr:hover td { background:#161616; }
 .event-group { border-top:2px solid #2c2c2c; padding-top:22px; margin-top:22px; }
 .event-group:first-of-type { margin-top:6px; }
 .group-header h2 { font-size:19px; margin:0 0 4px; color:#e8e8e8; font-weight:700; }
-.group-header .xero-line { font-size:13px; color:#8a9bb0; margin:0 0 16px; line-height:1.5; }
+.group-header .xero-line { font-size:13px; color:#8a9bb0; margin:8px 0 0; line-height:1.5; }
 .unmatched-header h2 { color:#c9a9ec; }
 .unmatched-note { font-size:13.5px; color:#a89ab8; margin:0 0 16px; font-style:italic; }
+.company-chip { display:inline-block; font-size:12px; font-weight:800; letter-spacing:.03em;
+  padding:3px 9px; border-radius:6px; margin-right:8px; vertical-align:middle; }
+.company-chip-or { background:#1c2436; color:#a9c4ec; }
+.company-chip-grr { background:#16321f; color:#7fd18b; }
+.company-chip-mixed { background:#332619; color:#f0b37e; }
+.xero-refs { margin:6px 0 16px; }
+.xero-refs summary { cursor:pointer; color:#8a9bb0; font-size:13px; padding:4px 0; list-style:none; }
+.xero-refs summary::-webkit-details-marker { display:none; }
+.xero-refs summary::before { content:"▸ "; }
+.xero-refs[open] summary::before { content:"▾ "; }
+.xero-refs .xero-line { margin-top:6px; }
+.photo-grid { display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; margin:0 0 18px; }
+.grid-cell { position:relative; border-radius:8px; overflow:hidden; background:#1a1a1a; }
+.grid-cell[open] { grid-column:1 / -1; background:none; }
+.grid-cell summary { cursor:pointer; list-style:none; display:block; position:relative; }
+.grid-cell summary::-webkit-details-marker { display:none; }
+.grid-cell:not([open]) summary { aspect-ratio:1 / 1; }
+.grid-cell:not([open]) summary img { width:100%; height:100%; object-fit:cover; display:block; }
+.grid-cell[open] summary img { display:none; }
+.grid-cell[open] summary { padding:6px 0; }
+.grid-cell[open] summary .grid-date-chip { position:static; display:inline-block; }
+.grid-date-chip { position:absolute; left:5px; bottom:5px; background:rgba(0,0,0,.68);
+  color:#e8e8e8; font-size:11px; font-weight:700; padding:2px 7px; border-radius:6px; z-index:1; }
+.grid-missing { width:100%; height:100%; aspect-ratio:1/1; display:flex; align-items:center;
+  justify-content:center; color:#e0837e; font-size:11px; text-align:center; padding:4px; }
+.expanded-card { padding-top:4px; }
+@media (max-width:760px) { .photo-grid { grid-template-columns:repeat(3, 1fr); } }
+@media (max-width:420px) { .photo-grid { grid-template-columns:repeat(2, 1fr); } }
 .dup-expander { margin:-4px 0 20px; }
 .dup-expander summary { cursor:pointer; color:#7fb0e8; font-size:14px; padding:6px 0;
   list-style:none; }
@@ -873,11 +901,160 @@ def render_photo_block_html(r, collapse_map, dup_paths, twin_notes, path_to_row)
     return row_html + expander_html
 
 
+def render_photo_grid_cell_html(r, extra_note_html=""):
+    """One 5-wide-grid cell: thumbnail (reuses the existing /thumb route --
+    same downscaled JPEG the old full-width row used, no parallel pipeline)
+    + a tiny date chip, wrapped in <details> so a tap expands in place to the
+    existing full photo card (date, lee_note, PUBLIC/PRIVATE state, flip
+    button) via render_photo_row_html verbatim -- collapsed into the grid
+    never means unflippable."""
+    rid = r["id"]
+    date = r.get("visit_date") or "undated"
+    has_file = bool(r.get("original_path")) and os.path.exists(r.get("original_path") or "")
+    if has_file:
+        thumb_html = (
+            "<img src='/thumb?id=%s' loading='lazy' alt='roof photo'>"
+            % urllib.parse.quote(str(rid))
+        )
+    else:
+        thumb_html = "<div class='grid-missing'>No file</div>"
+
+    full_card_html = render_photo_row_html(r, extra_note_html=extra_note_html)
+
+    return (
+        "<details class='grid-cell'>"
+        "<summary><span class='grid-date-chip'>%s</span>%s</summary>"
+        "<div class='expanded-card'>%s</div>"
+        "</details>"
+        % (html.escape(str(date)), thumb_html, full_card_html)
+    )
+
+
+def render_photo_grid_html(photos, collapse_map, dup_paths, twin_notes, path_to_row):
+    """5-wide thumbnail grid for one group (F6B spec Sec 2). Dedupe collapse
+    and possible-twin notes are the SAME logic as render_photo_block_html --
+    a collapsed photo doesn't get its own cell, and a keeper's '+N similar
+    shots' expander renders after the grid, unchanged in content."""
+    cells = []
+    trailing_expanders = []
+    for r in photos:
+        path = r.get("original_path")
+        if path and path in dup_paths:
+            continue
+
+        note_html = ""
+        if path and path in twin_notes:
+            note_html = "<div class='twin-note'>possible twin exists in the other export &mdash; not merged</div>"
+
+        cells.append(render_photo_grid_cell_html(r, extra_note_html=note_html))
+
+        if path and path in collapse_map:
+            dup_rows_html = []
+            for f in collapse_map[path]:
+                dup_row = path_to_row.get(f.get("path"))
+                if dup_row:
+                    dup_rows_html.append(render_photo_row_html(dup_row))
+            if dup_rows_html:
+                trailing_expanders.append(
+                    "<details class='dup-expander'><summary>+%d similar shots &mdash; tap to show</summary>%s</details>"
+                    % (len(dup_rows_html), "".join(dup_rows_html))
+                )
+
+    if not cells:
+        return ""
+    grid_html = "<div class='photo-grid'>%s</div>" % "".join(cells)
+    return grid_html + "".join(trailing_expanders)
+
+
+MONTH3 = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+TENANT_TO_COMPANY = {
+    "Organic Roofs Ltd": "OR",
+    "Green Roof Revival Limited": "GRR",
+}
+
+PHASE_SHORT_SEASON = {
+    "Spring roofcare": "RoofCare Spr",
+    "Summer care and haycut": "RoofCare Sum",
+    "Winter care": "RoofCare Win",
+}
+
+PHASE_SHORT_MONTHLY = {
+    "Repair": "Repairs",
+    "Leak detection": "Leak detection",
+    "Diagnostic": "Diagnostic",
+    "Handover": "Handover",
+    "Visit": "Visit",
+}
+
+
+def _mon3(d):
+    return MONTH3[d.month - 1]
+
+
+def _yy(d):
+    return "%02d" % (d.year % 100)
+
+
+def short_descriptor(window, start, end):
+    """F6B spec Sec 1: short words + compact date, never the bill. phase ->
+    words map; Install gets a Mon-Mon range, seasonal roofcare gets just the
+    year, everything else gets a single Mon YY off the window start."""
+    phase = window.get("phase") or "Visit"
+    if phase == "Install":
+        if start and end:
+            if start.year == end.year:
+                if start.month == end.month:
+                    return "Install %s %s" % (_mon3(start), _yy(start))
+                return u"Install %s–%s %s" % (_mon3(start), _mon3(end), _yy(start))
+            return u"Install %s %s–%s %s" % (_mon3(start), _yy(start), _mon3(end), _yy(end))
+        ref = start or end
+        return "Install %s" % _yy(ref) if ref else "Install"
+    if phase in PHASE_SHORT_SEASON:
+        ref = start or end
+        return "%s %s" % (PHASE_SHORT_SEASON[phase], _yy(ref)) if ref else PHASE_SHORT_SEASON[phase]
+    label = PHASE_SHORT_MONTHLY.get(phase, "Visit")
+    ref = start or end
+    return "%s %s %s" % (label, _mon3(ref), _yy(ref)) if ref else label
+
+
+def company_chip_html(invoices):
+    """Chip from invoice tenant values -- OR / GRR / OR + GRR. No invoices
+    (or no recognised tenant) -> no chip, per spec."""
+    companies = set()
+    for inv in invoices or []:
+        code = TENANT_TO_COMPANY.get(inv.get("tenant"))
+        if code:
+            companies.add(code)
+    if not companies:
+        return ""
+    if companies == set(["OR", "GRR"]):
+        label, cls = "OR + GRR", "mixed"
+    elif companies == set(["OR"]):
+        label, cls = "OR", "or"
+    else:
+        label, cls = "GRR", "grr"
+    return "<span class='company-chip company-chip-%s'>%s</span>" % (cls, html.escape(label))
+
+
 def render_group_header_html(window):
-    header = html.escape(window.get("header") or window.get("phase") or "Visit")
-    xero_line = format_invoice_line(window.get("invoices") or [])
-    xero_html = ("<div class='xero-line'>%s</div>" % xero_line) if xero_line else ""
-    return "<div class='group-header'><h2>%s</h2>%s</div>" % (header, xero_html)
+    start = _parse_date(window.get("start"))
+    end = _parse_date(window.get("end"))
+    if start and end and end < start:
+        start, end = end, start
+    descriptor_html = html.escape(short_descriptor(window, start, end))
+    chip_html = company_chip_html(window.get("invoices") or [])
+    title_html = (chip_html + " " + descriptor_html) if chip_html else descriptor_html
+
+    invoices = window.get("invoices") or []
+    xero_line = format_invoice_line(invoices)
+    xero_html = ""
+    if xero_line:
+        xero_html = (
+            "<details class='xero-refs'><summary>Xero refs (%d)</summary>"
+            "<div class='xero-line'>%s</div></details>" % (len(invoices), xero_line)
+        )
+    return "<div class='group-header'><h2>%s</h2>%s</div>" % (title_html, xero_html)
 
 
 def render_flip_page(job_ref, only_id=None):
@@ -909,33 +1086,32 @@ def render_flip_page(job_ref, only_id=None):
     has_events = bool(events_for_ref)
 
     billing_banner_html = ""
-    if only_id or not has_events:
-        # Flat fallback: 'only' jump, or a roof with no billing map at all
-        # yet -- the page NEVER breaks on an absent/empty grind file, it
-        # falls open to the old date-order view.
+    if only_id:
+        # 'only' jump is a verification convenience (proof screenshot of one
+        # photo) -- keep it as the plain full-card row, a 1-cell grid buys
+        # nothing here.
         row_blocks = [render_photo_block_html(r, collapse_map, dup_paths, twin_notes, path_to_row) for r in rows]
-        if not only_id:
-            billing_banner_html = (
-                "<div class='banner banner-note'><p>No billing map yet for this roof "
-                "&mdash; showing all photos in date order.</p></div>"
-            )
         body_content = "".join(row_blocks)
+    elif not has_events:
+        # Flat fallback: a roof with no billing map at all yet -- the page
+        # NEVER breaks on an absent/empty grind file, it falls open to the
+        # old date-order view (still rendered as the grid -- F6B applies
+        # page-wide, this is just one implicit group).
+        billing_banner_html = (
+            "<div class='banner banner-note'><p>No billing map yet for this roof "
+            "&mdash; showing all photos in date order.</p></div>"
+        )
+        body_content = render_photo_grid_html(rows, collapse_map, dup_paths, twin_notes, path_to_row)
     else:
         groups, unmatched = group_photos_by_event(rows, events_for_ref)
         section_blocks = []
         for g in groups:
-            photo_html = "".join(
-                render_photo_block_html(r, collapse_map, dup_paths, twin_notes, path_to_row)
-                for r in g["photos"]
-            )
+            photo_html = render_photo_grid_html(g["photos"], collapse_map, dup_paths, twin_notes, path_to_row)
             section_blocks.append(
                 "<div class='event-group'>%s%s</div>" % (render_group_header_html(g["window"]), photo_html)
             )
         if unmatched:
-            photo_html = "".join(
-                render_photo_block_html(r, collapse_map, dup_paths, twin_notes, path_to_row)
-                for r in unmatched
-            )
+            photo_html = render_photo_grid_html(unmatched, collapse_map, dup_paths, twin_notes, path_to_row)
             unmatched_header = (
                 "<div class='group-header unmatched-header'><h2>Not yet matched to billing</h2>"
                 "<p class='unmatched-note'>These photos fall in no known billing window yet "

@@ -21,6 +21,29 @@ job boards. F3 stays gated on Lee seeing SPINELINE-READINESS.md.)
 - **RESUME: ~/leeos-private/HANDOVER-2026-07-11-IMAGE-PLANE-NEXT.md** (case-studies×profit
   via WealthOS repo — never ibkr-history; ref-resolution c1/c2/c11/c13/c15; HayBase
   collateral; plant IDs; gated sheets rebuild).
+- **Post-answers queue window, 11 Jul afternoon (this session; no allocation moves —
+  counts held 8,355/245 through it):**
+  - **Q1 DONE** — case-studies×profit re-rank at
+    `~/leeos-private/pricing-study/CASE-STUDIES-PROFIT-2026-07-11.md` (leeos-private
+    @9cec9ff). Profit from the local Xero pull, nothing guessed. Headlines: Brighton Uni
+    maintenance = new #1 (307-14, £54k income, 69% over tagged); Avon Tyrrell's existing
+    case study FOUND (`~/Dropbox/Collateral/Archives - DO NOT USE/261-13 Avon Tyrrell
+    Case Study/Update Boathouse Story.pdf`); HayBase named set (incl. 917-18) 55% margin
+    on £63.6k; margin-by-type table built + verified (77% of tracked income honestly
+    unknown-system).
+  - **Q2** — Brighton Uni money-side RESOLVED: since 2014 ONE umbrella ref (307-14-M →
+    307-14-COM-M) covers Checkland/Huxley/Varley/Sports Centre; tie rule is Lee's pick →
+    `grind/brighton_uni_tie_proposal_20260711.json` (Mini A, quarantine). c13 lead:
+    never-paid job invisible in local pull because VOIDED invoices were excluded —
+    voided re-pull is the search key. c13/c15 deep sweep + Q4 plant-IDs ran as sonnet
+    doers (findings docs in docs/ when landed).
+  - **Q3** — HayBase collateral PROPOSAL (Lee-gated, nothing published):
+    `~/leeos-private/HAYBASE-COLLATERAL-PROPOSAL-2026-07-11.md`. One-glance asks inside
+    (img12 date Sept-22 vs Oct-20; honest-aesthetics line; mock go/no-go).
+  - **Q5 DONE (proposal)** — coord corrections QUARANTINED
+    (`grind/coord_corrections_quarantine_20260711.json`, Mini A): 175-13 pin = West
+    Drayton gmail false-positive vs 35/35 photos on Raasay; 261-13 pin = solar sub's
+    Kent address vs site BH23 8EE (maintenance-contract PDF). job_coords NOT edited.
 - First Lee-answer promotion 11 Jul: +113 ties via cluster answers (Tony Whitbread 1156-20,
   Spyways 885-18, Royal Holloway 1103-19, Bannut House 1688-24), applied from
   grind/f2_confirmed_ties_staged.jsonl after verification; allocation backup

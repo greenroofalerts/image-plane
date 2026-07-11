@@ -1,5 +1,12 @@
 # CURRENT_STATE.md — image-plane (LEE-411)
 
+**11 Jul late eve +1 — REPO VIEW ordered (ledgered): billable-event grouping ×
+Xero, phase-dated (never day/week splits), sister-ref cross-links (2 Olympic Mews =
+the example), dedupe in every repo view (files never deleted). Lee confirmed: flip
+surface/index = the REPO, GRA /roof = the presentation. Facet question (roof/component/
+visit-type repos vs filters) answered steel/straw, AWAITS LEE'S RULING. RESUME:
+~/leeos-private/HANDOVER-2026-07-11-PHOTO-REPO-VIEW.md — fresh window, this one 105%.**
+
 **11 Jul late eve — PHOTO WIRING BUILT (stages 1–3 of HANDOVER-2026-07-11-PHOTO-WIRING.md):**
 - **F5 DONE**: `visual_observations` @LeeOSplus extended (is_public default FALSE +
   check constraint: public REQUIRES gra_media_path — dark-ship enforced by construction;

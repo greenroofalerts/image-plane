@@ -6,6 +6,26 @@ outrank every summary, report, and handover. Newest at top.
 
 ## 2026-07-11
 
+- **REPO VIEW ordered: billable-event grouping + Xero cross-ref + dedupe** (late eve,
+  verbatim): "i need all the photos grouped by billable event and cross ref'd with
+  xero, all install pics together dont break into days or weeks, dated with a phase -
+  if there are other ref's eg differnet works on same roof, provide a link to that set
+  eg 2 olympic maitnenance and repairs" · "remove all duplicates" · "confirm this is
+  not the finished presentation, its the repo?" (confirmed: the flip surface/index =
+  the REPO; GRA /roof = the presentation) · "all in new windfow this one 105%" →
+  handover: ~/leeos-private/HANDOVER-2026-07-11-PHOTO-REPO-VIEW.md. Rules derived:
+  a billable event (Xero invoice/phase window) is the grouping unit, never days/weeks;
+  each group dated with a PHASE label; sister-ref sets cross-linked (2 Olympic Mews =
+  the named example); duplicates collapsed in every repo view (source files never
+  deleted — standing near-dupe rule holds).
+- **Facet question posed, steel/straw ordered** (same message, verbatim): "are you
+  able to provide an equiv set of repos for roof types, component types (perf alu,
+  drainage, fleece irrigation pebbels border etc), for visit types eg leak detection
+  roof repairs springRoofcare roofcare haycut/summer, winter etc - or is filter on
+  this repo better steel and straw man" → Fable's recommendation delivered same turn
+  (one repo + facet filters; separate repos = straw man); LEE HAS NOT RULED — the new
+  window presents, does not build, facets until he does.
+
 - **BUILD GO: GRA portal photo timelines + Glengarry card photo/price layer** (late
   afternoon, verbatim): "this is amazing, really encouraging - can you build this now:
   How it integrates with the GRA portal pages … How it integrates with the Glengarry

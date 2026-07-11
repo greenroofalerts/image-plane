@@ -6,6 +6,34 @@ outrank every summary, report, and handover. Newest at top.
 
 ## 2026-07-11
 
+- **CLUSTER ANSWERS RECEIVED** (morning, full dictation): Lee answered 19 of 20 clusters
+  (19 unanswered, 17 "not sure"). Raw dictation verbatim + interpreted capture:
+  ~/leeos-private/spine-capture/2026-07-11/cluster-answers-* (mirrored to Mini A grind/).
+  Four sheet candidates CONFIRMED by Lee: Tony Whitbread 1156-20 (c4), Spyways 885-18
+  (c7), Royal Holloway 1103-19 (c12), Bannut House 1688-24 (c14). Named-not-yet-ref'd:
+  Brighton Uni Varley Halls (c1), Brighton Uni Sports Centre (c2), Natural Resources
+  Wales bike store (c3), Ollie Blair Raasay (c5), Gatwick/'Hawley' HayBase (c11),
+  BedZED-contractor unpaid job (c13), Dover-area diagnostic (c15), Avon Tyrrell (c20).
+  Not-a-job: c6, c8 (Cornwall, Simon Giddings), c9, c10, c16, c18.
+- **Green-waste evidence photo = payment conditionality** (morning, verbatim): "operatives
+  on maintenance visits must always take an image showing the amount of green waste that's
+  been removed from the job with an estimate of the number of rubble sacks and or bulk
+  bags. This is part of the conditionality for approving payment and should be stated as
+  such in the terms or the agreement they need to know that they need to do this before
+  they go we should not take them by surprise."
+- **HayBase marketing collateral job ordered** (morning, verbatim core): "make us a job. I
+  want you to take out the pictures that I've made reference to across the entire
+  ecosystem, which are HayBase and proposed to me a new document marketing collateral
+  document from using the current HayBase but which introduces a page showing appearance
+  after 123 years" — 1/2/3-year appearance page; cluster 7 img 12 (Sept-22, 3 years) and
+  cluster 11 imgs 9/10 (handover) named as exemplars.
+- **Case studies × profit = major new line of enquiry** (morning, verbatim core): "take
+  the case studies that you can find and then using the image plane and comments from all
+  of this interaction and from Green Roof Alerts and tell me which of the jobs that you
+  can now identify confidently, you would be able to make a case study for … what type of
+  jobs and … with what type of profit margins look at the work … that's been done in the
+  wealth OS look at the ones … which drives the most profit … with what degree of
+  confidence - thatw a major new line of enquiry for oyu and i."
 - **Active-job rule for Trello-found refs** (morning, on the 284 new refs): "if no invoice
   for 24 months working back from today they are not active, and should be used for mining
   images, typology, profit, lccation etc but not distort 'live ations'" → Rule: activity =

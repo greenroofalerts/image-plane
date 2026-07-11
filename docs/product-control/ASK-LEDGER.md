@@ -4,6 +4,49 @@ Rule: any ask, correction or rejection Lee makes about this project enters
 here the SAME DAY, quoted and dated, by the window that heard it. Lee's words
 outrank every summary, report, and handover. Newest at top.
 
+## 2026-07-11
+
+- **Active-job rule for Trello-found refs** (morning, on the 284 new refs): "if no invoice
+  for 24 months working back from today they are not active, and should be used for mining
+  images, typology, profit, lccation etc but not distort 'live ations'" → Rule: activity =
+  ≥1 invoice in the trailing 24 months; inactive refs are mining/knowledge material only
+  and must never generate live actions or workload.
+- **OR/GRR cross-company job numbers** (morning): "or installs, grr maintains - very
+  possible and the code will often share same nnnn-yy but with a maintenance related
+  bookjepeping suffix: sometimes same place will have two different job numbers eg 2
+  olympic mews which has green roof maintannfcen and waterproofing repairs last year" →
+  Same NNNN-YY across companies (or with a maintenance suffix) = same roof candidate;
+  same site can legitimately carry two distinct numbers. Extend the sister-ref rule.
+- **No workload for non-active jobs** (morning, on continuous candidate engine): "yes but
+  dont create workload for non-active jobs, passive value add is fine and good."
+- **Weather×plants dynamic database ambition** (morning, verbatim core): "we want to
+  create a dynamic maching database for weather patterns capturedf by the weather feeds
+  in each postcode, look at all the pictures we've taken there, use the comments from
+  reports/next visit recommendations and build a historic dyanmic database of what plants
+  have done well and what have not how much irrigation is needed, what are companion
+  species, and also use this to read the last 12-24 months weather make reocmmendations
+  for what to do at site visits … could combine this with a social sentiment camillo
+  style search of gfardening blogs and bbc website and news sources … modelling of what
+  is working, and what to do about it in specification phase of green roofs (Organic
+  Roofs - becoming a job discovery phase) and ongoing care" → VISION AMBITION; needs its
+  own vision-stage-mapping canon session before any build.
+- **Old GRA click-to-reveal weather guidance wanted back** (morning): "the click to
+  reveal guidance monitoring on weather guidance that the OLD gra had new one not yet
+  would help with that" — GRA-side item, noted here for the weather×plants thread.
+- **Batch-answering by confidence: think on it** (morning): "haha interesting add that
+  as a thing to think about some more."
+- **Mini A backup ordered and done same morning** ("do it now"): Mini A had NO Time
+  Machine destination. Now: nightly 03:50 cron tarball of the critical set (ground truth,
+  ledgers, allocation, quarantine, docs, scripts; site_view excluded as regenerable) to
+  ~/backups/image-plane/ keep-14, plus first off-machine copy pulled to laptop
+  ~/Backups/image-plane-mini-a/. Guard: cron survives reboots; log at backups/backup.log.
+- **Project view public/private (Glengarry, spoken in this window)**: "i specifically
+  asked for a 'project view' of every card that has a job number which is basically its
+  GRA card with a public and private facing side - at the ooint of sharing, everything
+  that doesnt need to be pricvate can be flipped public" — belongs in Glengarry's Ask
+  Ledger; the Glengarry prompt Lee was given instructs that window to enter it there.
+  Berkeley Square card (not clickable) named as the live use case.
+
 ## 2026-07-10
 
 - **F2 CANDIDATE PASS + F3 READINESS mandate — Lee's order VERBATIM** (late eve; ratified

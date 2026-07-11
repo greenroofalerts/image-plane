@@ -6,6 +6,21 @@ outrank every summary, report, and handover. Newest at top.
 
 ## 2026-07-11
 
+- **Customer visibility rule made permanent** (late eve, verbatim): "the photos will
+  opnly evefr be visible via the GRA site page" → THE GRA SITE PAGE IS THE ONLY
+  CUSTOMER-VISIBLE PHOTO SURFACE, EVER. The Mini A pages (flip surface, site views)
+  are Lee-internal tools and must never be shared or linked customer-facing. Any
+  future surface wanting photos routes through the GRA page or gets its own Lee
+  ruling first.
+- **Labelling speed-up brief ordered for the next window** (late eve, verbatim): "ok
+  so how does labelling progress, i've lablled hundreds already … in next window
+  explain how that process could be sped up without losing reliability - what is the
+  low hanging fruit, and do what after that?" → Next window must PRESENT (before any
+  build): how labelling works today, the speed-up options ranked by effort-vs-trust,
+  the low-hanging fruit named, and the sequence after it. Reliability bar unchanged:
+  Lee's words = ground truth; machine suggestions stay quarantined until he confirms
+  (IP-L9); spreads measured against his hand labels.
+
 - **REPO VIEW ordered: billable-event grouping + Xero cross-ref + dedupe** (late eve,
   verbatim): "i need all the photos grouped by billable event and cross ref'd with
   xero, all install pics together dont break into days or weeks, dated with a phase -

@@ -5,3 +5,12 @@ __pycache__/
 .pytest_cache/
 image_plane.db
 tests/fixtures/generated/
+
+# Real photos / page screenshots must NEVER be committed (repo rule) — they live in
+# ~/leeos-private/. This blocks the whole class, not just one folder.
+*.png
+*.jpg
+*.jpeg
+*.heic
+*.HEIC
+*.JPG

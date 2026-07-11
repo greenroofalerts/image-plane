@@ -21,8 +21,16 @@ job boards. F3 stays gated on Lee seeing SPINELINE-READINESS.md.)
 - **RESUME: ~/leeos-private/HANDOVER-2026-07-11-IMAGE-PLANE-NEXT.md** (case-studies×profit
   via WealthOS repo — never ibkr-history; ref-resolution c1/c2/c11/c13/c15; HayBase
   collateral; plant IDs; gated sheets rebuild).
-- **Post-answers queue window, 11 Jul afternoon (this session; no allocation moves —
-  counts held 8,355/245 through it):**
+- **11 Jul ~15:45 — Lee ruled "apply both coord corrections, brighton option a" (ledgered):**
+  job_coords 175-13→Raasay GPS median, 261-13→BH23 8EE (backup .bak_pre_coordfix_20260711);
+  Brighton c1+c2 → umbrella ref 307-14 with building on every row (varley-halls 67 /
+  sports-centre 66), batch f2-brighton-optionA-20260711 via the staged path (0 dateless,
+  0 overlap; backup allocation_v2.jsonl.bak_pre_brightonA_20260711). Counts 8,355→**8,488
+  tied**, roofs 245→**246** (counts.py after flags rebuild). 307-14 tagged inactive-24m
+  (latest UoB invoice 2022-05-08) — mining/knowledge only, never live actions. Off-machine
+  ground-truth copies refreshed (~/Backups/image-plane-mini-a/). site_view rebuild kicked.
+- **Post-answers queue window, 11 Jul afternoon (earlier same session; no allocation moves
+  during it):**
   - **Q1 DONE** — case-studies×profit re-rank at
     `~/leeos-private/pricing-study/CASE-STUDIES-PROFIT-2026-07-11.md` (leeos-private
     @9cec9ff). Profit from the local Xero pull, nothing guessed. Headlines: Brighton Uni

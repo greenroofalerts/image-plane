@@ -6,6 +6,15 @@ outrank every summary, report, and handover. Newest at top.
 
 ## 2026-07-11
 
+- **Coord corrections + Brighton tie rule RULED** (afternoon, verbatim): "apply both
+  coord corrections, brighton option a" → 175-13 map pin moves to the Raasay cluster
+  GPS median; 261-13 to site postcode BH23 8EE (both per
+  grind/coord_corrections_quarantine_20260711.json). Brighton option a = c1 (Varley
+  Halls) + c2 (Sports Centre) photos tie to the umbrella programme ref 307-14 with the
+  building name carried on each row; per-building record pages render by that tag.
+  Same message asked for a no-jargon map of what's built, how to use it, and how it
+  integrates with GRA portal pages and Glengarry enquiry-job cards.
+
 - **Three refs given + profit-source ruling** (midday, verbatim): "wales 1051-19 /
   avontyrel 0261-13 / raasay 0175-13 / dont guess at profit but wealthos repo". All three
   verified against Xero lines this turn (1051-19 = Cyfoeth Naturiol Cymru bike shelter;

@@ -10,9 +10,17 @@ New quarantine files: grind/f2_candidates.json (v2; .v1 backup) + grind/f2_trell
 Trello swept for the first time: 49/49 boards, 3,450 cards; OR MAIN + Revival Main are the only
 job boards. F3 stays gated on Lee seeing SPINELINE-READINESS.md.)
 
-## Corpus state (Counted by: `python3 ~/image-plane/counts.py --json` on Mini A, 2026-07-11 midday)
-- 12,338 kept photos · **8,224 tied to a roof (67%)** · 4,114 not (3,415 with GPS, 699 without)
-- **242 roofs** have tied photos · job map `grind/job_coords.json` = 419 refs
+## Corpus state (Counted by: `python3 ~/image-plane/counts.py --json` on Mini A, 2026-07-11 ~14:30)
+- 12,338 kept photos · **8,328 tied to a roof (68%)** · 4,010 not (3,311 with GPS, 699 without)
+- **244 roofs** have tied photos · job map `grind/job_coords.json` = 419 refs
+- Round 2 promotion 11 Jul midday: +104 ties (Wales NRW 1051-19 c3=52, Raasay Olli Blair
+  175-13 c5=35, Avon Tyrrell 261-13 c20=17), refs given by Lee, Xero-verified; backup
+  allocation_v2.jsonl.bak_pre_f2answers_r2_20260711. NOTE: 175-13 + 261-13 map coords are
+  >2km from their confirmed clusters — likely billing addresses; quarantined correction
+  queued (handover Q5), job_coords NOT edited.
+- **RESUME: ~/leeos-private/HANDOVER-2026-07-11-IMAGE-PLANE-NEXT.md** (case-studies×profit
+  via WealthOS repo — never ibkr-history; ref-resolution c1/c2/c11/c13/c15; HayBase
+  collateral; plant IDs; gated sheets rebuild).
 - First Lee-answer promotion 11 Jul: +113 ties via cluster answers (Tony Whitbread 1156-20,
   Spyways 885-18, Royal Holloway 1103-19, Bannut House 1688-24), applied from
   grind/f2_confirmed_ties_staged.jsonl after verification; allocation backup

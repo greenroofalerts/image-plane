@@ -6,6 +6,16 @@ outrank every summary, report, and handover. Newest at top.
 
 ## 2026-07-11
 
+- **Three refs given + profit-source ruling** (midday, verbatim): "wales 1051-19 /
+  avontyrel 0261-13 / raasay 0175-13 / dont guess at profit but wealthos repo". All three
+  verified against Xero lines this turn (1051-19 = Cyfoeth Naturiol Cymru bike shelter;
+  261-13 = Avon Tyrrell UK Youth; 175-13 = Olli Blair — canonical forms without leading
+  zeros). Ties applied: clusters 3/5/20, +104 photos, 8,224→8,328, roofs 242→244.
+  Profit ruling: the case-study profit join uses the WealthOS repo's job-profitability
+  machinery (local Xero) — NEVER guessed, and NOT the ibkr-history trades folder (Lee
+  relayed the trading window's own words: "nothing in this folder covers roofing jobs").
+- **Full handover to a new window ordered** (midday): "all in new winfow handove rpls
+  full now" → ~/leeos-private/HANDOVER-2026-07-11-IMAGE-PLANE-NEXT.md is the handover.
 - **CLUSTER ANSWERS RECEIVED** (morning, full dictation): Lee answered 19 of 20 clusters
   (19 unanswered, 17 "not sure"). Raw dictation verbatim + interpreted capture:
   ~/leeos-private/spine-capture/2026-07-11/cluster-answers-* (mirrored to Mini A grind/).

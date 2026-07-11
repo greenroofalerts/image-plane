@@ -16,6 +16,15 @@ outrank every summary, report, and handover. Newest at top.
   relayed the trading window's own words: "nothing in this folder covers roofing jobs").
 - **Full handover to a new window ordered** (midday): "all in new winfow handove rpls
   full now" → ~/leeos-private/HANDOVER-2026-07-11-IMAGE-PLANE-NEXT.md is the handover.
+- **Gatwick cluster (c11) SOLVED via Lee's plan photo** (early afternoon): Lee sent the
+  Photos screenshot "Burstow - Smallfield, 17 September 2018" — "try this for gatwick".
+  Resolution: **917-18 Lake Cottage, Smallfield RH6 9RF** (Trello quarantine row 0.36km
+  from cluster centroid; Xero: Liquid Applied Solutions VCL Nov-18, Henry Construction
+  Projects Ltd advances Feb–May-19, Steve Sanham basement materials Mar-19 — all inside
+  the photo span). +27 ties applied (8,328→8,355, 245 roofs, backup _r3_20260711).
+  Third billing-vs-site map error found: 917-18 map coords = Henry Construction's
+  Hounslow office (TW5 9RY), not the site → added to the Q5 coord-correction quarantine
+  with 175-13 and 261-13.
 - **CLUSTER ANSWERS RECEIVED** (morning, full dictation): Lee answered 19 of 20 clusters
   (19 unanswered, 17 "not sure"). Raw dictation verbatim + interpreted capture:
   ~/leeos-private/spine-capture/2026-07-11/cluster-answers-* (mirrored to Mini A grind/).

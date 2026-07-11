@@ -10,9 +10,9 @@ New quarantine files: grind/f2_candidates.json (v2; .v1 backup) + grind/f2_trell
 Trello swept for the first time: 49/49 boards, 3,450 cards; OR MAIN + Revival Main are the only
 job boards. F3 stays gated on Lee seeing SPINELINE-READINESS.md.)
 
-## Corpus state (Counted by: `python3 ~/image-plane/counts.py --json` on Mini A, 2026-07-11 ~14:30)
-- 12,338 kept photos · **8,328 tied to a roof (68%)** · 4,010 not (3,311 with GPS, 699 without)
-- **244 roofs** have tied photos · job map `grind/job_coords.json` = 419 refs
+## Corpus state (Counted by: `python3 ~/image-plane/counts.py --json` on Mini A, 2026-07-11 ~15:00; r3: c11=917-18 Lake Cottage Smallfield +27, solved via Lee's "Burstow-Smallfield" plan photo + Trello quarantine 0.36km hit)
+- 12,338 kept photos · **8,355 tied to a roof (68%)** · 3,983 not (3,284 with GPS, 699 without)
+- **245 roofs** have tied photos · job map `grind/job_coords.json` = 419 refs
 - Round 2 promotion 11 Jul midday: +104 ties (Wales NRW 1051-19 c3=52, Raasay Olli Blair
   175-13 c5=35, Avon Tyrrell 261-13 c20=17), refs given by Lee, Xero-verified; backup
   allocation_v2.jsonl.bak_pre_f2answers_r2_20260711. NOTE: 175-13 + 261-13 map coords are

@@ -26,13 +26,14 @@ import html
 import io
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from PIL import Image
@@ -44,6 +45,12 @@ THUMB_DIR = os.path.join(GRIND, "flip_thumbs")
 SITE_NAMES_PATH = os.path.join(GRIND, "site_names.json")
 SITE_NAMES_CACHE_PATH = os.path.join(GRIND, "flip_site_names_cache.json")
 ENV_PATH = os.path.join(ROOT, ".env.flip")
+BILLABLE_EVENTS_PATH = os.path.join(GRIND, "billable_events.json")
+SISTER_REFS_PATH = os.path.join(GRIND, "sister_refs.json")
+DEDUPE_FLAGS_PATH = os.path.join(GRIND, "repo_dedupe_flags.jsonl")
+EVENT_WINDOW_PAD_DAYS = 21
+POUND_RE = re.compile(u"£")
+COLLAPSE_DEDUPE_KINDS = ("exact", "near", "prior_pass")
 STORAGE_BUCKET = "roof-photos"
 FLIP_ACTOR = "lee-flip-surface"
 CURATED_MAX_EDGE = 1600
@@ -394,6 +401,267 @@ def get_row(row_id):
 
 
 # --------------------------------------------------------------------------
+# F6 -- billable-event grouping, sister refs, dedupe collapsing
+# (read-side only: grind/billable_events.json, grind/sister_refs.json,
+#  grind/repo_dedupe_flags.jsonl are built by other scripts and never
+#  written here. Every load is fail-open: a missing/malformed grind file
+#  degrades to the F5 flat view, it never breaks the page.)
+# --------------------------------------------------------------------------
+
+def _load_json_safe(path, default):
+    if not os.path.exists(path):
+        return default
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except Exception as e:
+        sys.stderr.write("flip_server: failed to load %s (%s), falling back\n" % (path, e))
+        return default
+
+
+def load_billable_events():
+    data = _load_json_safe(BILLABLE_EVENTS_PATH, {})
+    if not isinstance(data, dict):
+        return {}
+    return {k: v for k, v in data.items() if k != "_meta"}
+
+
+def load_sister_refs():
+    data = _load_json_safe(SISTER_REFS_PATH, {})
+    if not isinstance(data, dict):
+        return {}
+    return {k: v for k, v in data.items() if k != "_meta"}
+
+
+def load_dedupe_flags():
+    """Read fresh every request -- a background pass keeps appending near-dupe
+    rows to this file. Tolerate a truncated/partial last line (fail open on
+    that one row, not the whole file)."""
+    if not os.path.exists(DEDUPE_FLAGS_PATH):
+        return []
+    try:
+        with open(DEDUPE_FLAGS_PATH) as f:
+            lines = f.readlines()
+    except Exception as e:
+        sys.stderr.write("flip_server: failed to read %s (%s)\n" % (DEDUPE_FLAGS_PATH, e))
+        return []
+    flags = []
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            flags.append(json.loads(line))
+        except Exception:
+            continue  # tolerate a bad/truncated row (e.g. writer mid-append)
+    return flags
+
+
+def _parse_date(s):
+    if not s:
+        return None
+    try:
+        return datetime.strptime(str(s)[:10], "%Y-%m-%d").date()
+    except Exception:
+        return None
+
+
+def _nearest_window_index(visit_date, windows):
+    """windows: list of {"start": date, "end": date}. Membership test uses the
+    padded window; the tiebreak distance is measured to the nearest UNPADDED
+    edge (spec: edge distance, not midpoint). Ties broken by window start,
+    deterministic."""
+    if not visit_date:
+        return None
+    best = None
+    for i, w in enumerate(windows):
+        pad_start = w["start"] - timedelta(days=EVENT_WINDOW_PAD_DAYS)
+        pad_end = w["end"] + timedelta(days=EVENT_WINDOW_PAD_DAYS)
+        if not (pad_start <= visit_date <= pad_end):
+            continue
+        if visit_date < w["start"]:
+            dist = (w["start"] - visit_date).days
+        elif visit_date > w["end"]:
+            dist = (visit_date - w["end"]).days
+        else:
+            dist = 0
+        cand = (dist, w["start"], i)
+        if best is None or cand < best:
+            best = cand
+    return best[2] if best is not None else None
+
+
+def group_photos_by_event(rows, events):
+    """events: the raw list from billable_events.json for this ref. Returns
+    (groups, unmatched) -- groups is a list of {"window": raw_window, "photos": [...]}
+    date-ordered by window start, empty windows dropped; unmatched is the
+    date-ordered list of photos in no window (rendered last by the caller)."""
+    windows = []
+    for w in events:
+        start = _parse_date(w.get("start"))
+        end = _parse_date(w.get("end"))
+        if not start or not end:
+            continue
+        if end < start:
+            start, end = end, start
+        windows.append({"raw": w, "start": start, "end": end})
+    windows.sort(key=lambda w: (w["start"], w["end"]))
+
+    groups = [{"window": w["raw"], "start": w["start"], "photos": []} for w in windows]
+    unmatched = []
+    for r in rows:
+        vd = _parse_date(r.get("visit_date"))
+        idx = _nearest_window_index(vd, [{"start": w["start"], "end": w["end"]} for w in windows])
+        if idx is None:
+            unmatched.append(r)
+        else:
+            groups[idx]["photos"].append(r)
+
+    for g in groups:
+        g["photos"].sort(key=lambda r: (r.get("visit_date") or "", r.get("id")))
+    unmatched.sort(key=lambda r: (r.get("visit_date") or "", r.get("id")))
+
+    groups = [g for g in groups if g["photos"]]
+    groups.sort(key=lambda g: g["start"])
+    return groups, unmatched
+
+
+def format_invoice_line(invoices):
+    """Xero cross-ref line: invoice numbers + dates + redacted snippets.
+    Builder already strips £ amounts, but this is the render-side backstop --
+    if a £ symbol somehow survives in a snippet, drop that snippet only and
+    keep the invoice number + date (spec: NO £ ever reaches rendered HTML)."""
+    if not invoices:
+        return ""
+    parts = []
+    for inv in invoices:
+        num = inv.get("invoice_number") or ""
+        date = inv.get("date") or ""
+        snippet = inv.get("description_snippet") or ""
+        if POUND_RE.search(snippet):
+            snippet = ""
+        piece = html.escape(num) if num else ""
+        if date:
+            piece = (piece + " (%s)" % html.escape(date)) if piece else html.escape(date)
+        if snippet:
+            piece = (piece + " &mdash; " + html.escape(snippet)) if piece else html.escape(snippet)
+        if piece:
+            parts.append(piece)
+    return " &middot; ".join(parts)
+
+
+def build_dedupe_index(rows):
+    """rows: this roof's visual_observations rows. Returns:
+      collapse_map: keeper original_path -> list of flag rows to collapse behind it
+      dup_paths: set of original_path values that are collapsed (skip standalone render)
+      twin_notes: set of original_path values carrying an unmerged possible_twin note
+    Fail-open: if the keeper's path isn't in this roof's current photo set, that
+    group is NOT collapsed (spec IP-L: never hide a photo behind a keeper that
+    isn't actually showing on this page)."""
+    flags = load_dedupe_flags()
+    path_set = set(r.get("original_path") for r in rows if r.get("original_path"))
+    collapse_map = {}
+    dup_paths = set()
+    twin_notes = set()
+    for f in flags:
+        path = f.get("path")
+        if not path or path not in path_set:
+            continue
+        kind = f.get("kind")
+        if kind == "possible_twin":
+            twin_notes.add(path)
+            continue
+        if kind in COLLAPSE_DEDUPE_KINDS:
+            keeper = f.get("duplicate_of")
+            if not keeper or keeper not in path_set or keeper == path:
+                continue  # keeper not on this page (or self-referential) -- fail open, don't collapse
+            collapse_map.setdefault(keeper, []).append(f)
+            dup_paths.add(path)
+    # A path can't be both a keeper and collapsed behind another keeper on
+    # the same page -- if that ever happens (chained verdicts), fail open by
+    # dropping it from dup_paths so it still renders standalone.
+    dup_paths -= set(collapse_map.keys())
+    return collapse_map, dup_paths, twin_notes
+
+
+def count_photos_for_refs(refs):
+    """Live count of visual_observations rows per job_ref, one batched query.
+    Returns None on total query failure (caller should then fail OPEN --
+    i.e. show the link rather than assume zero); returns a dict (missing key
+    means 0) on success."""
+    refs = [r for r in refs if r]
+    if not refs:
+        return {}
+    in_list = ",".join(urllib.parse.quote(r) for r in refs)
+    try:
+        rows = leeosplus_get_all("visual_observations", "job_ref=in.(%s)&select=job_ref" % in_list)
+    except Exception:
+        return None
+    counts = {}
+    for r in rows:
+        jr = r.get("job_ref")
+        counts[jr] = counts.get(jr, 0) + 1
+    return counts
+
+
+SISTER_TIERS = (
+    ("confirmed", "Also this roof"),
+    ("candidate", "Possibly the same roof"),
+    ("same_site", "Same site"),
+)
+
+
+def has_sister_links(entry):
+    if not entry:
+        return False
+    return bool(entry.get("confirmed") or entry.get("candidate") or entry.get("same_site"))
+
+
+def render_sister_links_html(job_ref, sister_map):
+    entry = sister_map.get(job_ref)
+    if not has_sister_links(entry):
+        return ""
+
+    all_refs = []
+    for tier_key, _ in SISTER_TIERS:
+        for link in (entry.get(tier_key) or []):
+            if link.get("ref"):
+                all_refs.append(link["ref"])
+    live_counts = count_photos_for_refs(all_refs)  # None = query failed, fail open
+
+    lines = []
+    for tier_key, prefix in SISTER_TIERS:
+        for link in (entry.get(tier_key) or []):
+            ref = link.get("ref")
+            if not ref:
+                continue
+            label = link.get("label") or "works"
+            tied = link.get("tied_photos")
+            if tied is None:
+                if live_counts is None:
+                    tied = 1  # count unknown -- fail open, still show the link
+                else:
+                    tied = live_counts.get(ref, 0)
+            # Names-not-codes: the label from sister_refs.json is already the
+            # human works/site description -- render it verbatim, refcode as
+            # small-print suffix only (same convention as display_name_html).
+            label_html = "%s <span class='refcode'>(%s)</span>" % (html.escape(label), html.escape(ref))
+            if tied == 0:
+                lines.append(
+                    "<div class='sister-link sister-none'>%s: %s &mdash; no photos tied yet</div>"
+                    % (prefix, label_html)
+                )
+            else:
+                lines.append(
+                    "<div class='sister-link'><a href='/flip/%s'>%s: %s &rarr;</a></div>"
+                    % (urllib.parse.quote(ref), prefix, label_html)
+                )
+    if not lines:
+        return ""
+    return "<div class='sister-links'>%s</div>" % "".join(lines)
+
+
+# --------------------------------------------------------------------------
 # HTML rendering
 # --------------------------------------------------------------------------
 
@@ -442,6 +710,29 @@ tr:hover td { background:#161616; }
 .footer-bar { position:fixed; left:0; right:0; bottom:0; background:#141416;
   border-top:1px solid #2a2a2a; padding:12px 20px; text-align:center; font-size:14.5px; }
 .error-flag { color:#e0837e; font-size:13.5px; margin-top:6px; }
+.sister-links { margin:6px 0 4px; display:flex; flex-direction:column; gap:4px; }
+.sister-link { font-size:14px; }
+.sister-link a { font-weight:600; }
+.sister-link.sister-none { color:#8a8a8a; }
+.linked-marker { display:inline-block; background:#241c33; color:#c9a9ec; font-size:11px;
+  font-weight:700; text-transform:uppercase; letter-spacing:.03em; padding:2px 8px;
+  border-radius:10px; margin-left:8px; vertical-align:middle; }
+.banner-note { background:#241f14; border-left-color:#e0b87e; }
+.banner-note p { color:#e0cba0; font-size:14.5px; }
+.event-group { border-top:2px solid #2c2c2c; padding-top:22px; margin-top:22px; }
+.event-group:first-of-type { margin-top:6px; }
+.group-header h2 { font-size:19px; margin:0 0 4px; color:#e8e8e8; font-weight:700; }
+.group-header .xero-line { font-size:13px; color:#8a9bb0; margin:0 0 16px; line-height:1.5; }
+.unmatched-header h2 { color:#c9a9ec; }
+.unmatched-note { font-size:13.5px; color:#a89ab8; margin:0 0 16px; font-style:italic; }
+.dup-expander { margin:-4px 0 20px; }
+.dup-expander summary { cursor:pointer; color:#7fb0e8; font-size:14px; padding:6px 0;
+  list-style:none; }
+.dup-expander summary::-webkit-details-marker { display:none; }
+.dup-expander summary::before { content:"▸ "; }
+.dup-expander[open] summary::before { content:"▾ "; }
+.dup-expander .row { padding-left:16px; border-top:1px dashed #262626; }
+.twin-note { font-size:13px; color:#c9a9ec; margin:4px 0 8px; }
 """
 
 
@@ -466,6 +757,8 @@ def render_index():
         if r.get("is_public"):
             d["public"] += 1
 
+    sister_map = load_sister_refs()
+
     def sort_key(jr):
         name = resolve_name(jr)
         return (0, name.lower()) if name else (1, jr)
@@ -479,10 +772,11 @@ def render_index():
         d = per_ref[jr]
         pub_html = ("<span class='count count-public'>%d</span>" % d["public"]) if d["public"] else \
             "<span class='count'>0</span>"
+        linked_html = "<span class='linked-marker'>linked</span>" if has_sister_links(sister_map.get(jr)) else ""
         rows_html.append(
             "<tr onclick=\"location.href='/flip/%s'\" style='cursor:pointer'>"
-            "<td>%s</td><td class='count'>%d</td><td>%s</td></tr>"
-            % (urllib.parse.quote(jr), display_name_html(jr), d["total"], pub_html)
+            "<td>%s%s</td><td class='count'>%d</td><td>%s</td></tr>"
+            % (urllib.parse.quote(jr), display_name_html(jr), linked_html, d["total"], pub_html)
         )
 
     body = (
@@ -494,6 +788,96 @@ def render_index():
         % (len(refs), total_photos, total_public, "".join(rows_html))
     )
     return page_shell("Roof photo timelines", body)
+
+
+def render_photo_row_html(r, extra_note_html=""):
+    rid = r["id"]
+    date = r.get("visit_date") or "undated"
+    is_pub = bool(r.get("is_public"))
+    state_cls = "state-public" if is_pub else "state-private"
+    state_txt = "PUBLIC" if is_pub else "PRIVATE"
+    btn_cls = "is-public" if is_pub else "is-private"
+    btn_txt = "Public — tap to make Private" if is_pub else "Private — tap to make Public"
+
+    building_html = ""
+    if r.get("building"):
+        building_html = "<span class='building-badge'>%s</span>" % html.escape(r["building"])
+
+    note_html = ""
+    if r.get("lee_note"):
+        note_html = (
+            "<div class='caption'><span class='caption-label'>Lee</span>%s</div>"
+            % html.escape(r["lee_note"])
+        )
+
+    has_file = bool(r.get("original_path")) and os.path.exists(r.get("original_path") or "")
+    if has_file:
+        photo_html = (
+            "<a class='photowrap' href='/thumb?id=%s' target='_blank'>"
+            "<img src='/thumb?id=%s' loading='lazy' alt='roof photo'></a>"
+            % (urllib.parse.quote(str(rid)), urllib.parse.quote(str(rid)))
+        )
+        error_html = ""
+    else:
+        photo_html = "<div class='missing'>Original file not found on disk &mdash; cannot display or flip.</div>"
+        error_html = "<div class='error-flag'>Missing on disk: flip is disabled for this photo.</div>"
+
+    toggle_html = (
+        "" if not has_file else
+        "<button class=\"toggle-btn %s\" data-id=\"%s\" data-public=\"%s\" onclick=\"flipPhoto(this)\">%s</button>"
+        % (btn_cls, html.escape(str(rid)), "1" if is_pub else "0", html.escape(btn_txt))
+    )
+
+    return (
+        "<div class='row photo-row' id='row-%s'>"
+        "<div class='rowhead'><span class='date-badge'>%s</span>%s</div>"
+        "%s%s%s"
+        "<div class='state-row'>"
+        "<span class='state-badge %s'>%s</span>%s</div>"
+        "%s"
+        "</div>"
+        % (html.escape(str(rid)), html.escape(str(date)), building_html, photo_html, note_html,
+           extra_note_html, state_cls, state_txt, toggle_html, error_html)
+    )
+
+
+def render_photo_block_html(r, collapse_map, dup_paths, twin_notes, path_to_row):
+    """One photo's rendered block: the row itself (unless it's collapsed
+    behind a keeper elsewhere in this same list, in which case it renders
+    nothing here -- it appears nested in the keeper's expander instead), plus
+    a possible-twin note and/or a '+N similar shots' expander when this row
+    IS a keeper. Collapsed never means unflippable -- expanded rows keep
+    their full flip buttons; nothing is deleted."""
+    path = r.get("original_path")
+    if path and path in dup_paths:
+        return ""
+
+    note_html = ""
+    if path and path in twin_notes:
+        note_html = "<div class='twin-note'>possible twin exists in the other export &mdash; not merged</div>"
+
+    row_html = render_photo_row_html(r, extra_note_html=note_html)
+
+    expander_html = ""
+    if path and path in collapse_map:
+        dup_rows_html = []
+        for f in collapse_map[path]:
+            dup_row = path_to_row.get(f.get("path"))
+            if dup_row:
+                dup_rows_html.append(render_photo_row_html(dup_row))
+        if dup_rows_html:
+            expander_html = (
+                "<details class='dup-expander'><summary>+%d similar shots &mdash; tap to show</summary>%s</details>"
+                % (len(dup_rows_html), "".join(dup_rows_html))
+            )
+    return row_html + expander_html
+
+
+def render_group_header_html(window):
+    header = html.escape(window.get("header") or window.get("phase") or "Visit")
+    xero_line = format_invoice_line(window.get("invoices") or [])
+    xero_html = ("<div class='xero-line'>%s</div>" % xero_line) if xero_line else ""
+    return "<div class='group-header'><h2>%s</h2>%s</div>" % (header, xero_html)
 
 
 def render_flip_page(job_ref, only_id=None):
@@ -514,56 +898,51 @@ def render_flip_page(job_ref, only_id=None):
     total = len(rows)
     public_now = sum(1 for r in rows if r.get("is_public"))
 
-    row_blocks = []
-    for r in rows:
-        rid = r["id"]
-        date = r.get("visit_date") or "undated"
-        is_pub = bool(r.get("is_public"))
-        state_cls = "state-public" if is_pub else "state-private"
-        state_txt = "PUBLIC" if is_pub else "PRIVATE"
-        btn_cls = "is-public" if is_pub else "is-private"
-        btn_txt = "Public — tap to make Private" if is_pub else "Private — tap to make Public"
+    sister_map = load_sister_refs()
+    sister_html = render_sister_links_html(job_ref, sister_map)
 
-        building_html = ""
-        if r.get("building"):
-            building_html = "<span class='building-badge'>%s</span>" % html.escape(r["building"])
+    path_to_row = {r.get("original_path"): r for r in rows if r.get("original_path")}
+    collapse_map, dup_paths, twin_notes = build_dedupe_index(rows)
 
-        note_html = ""
-        if r.get("lee_note"):
-            note_html = (
-                "<div class='caption'><span class='caption-label'>Lee</span>%s</div>"
-                % html.escape(r["lee_note"])
+    billable = load_billable_events()
+    events_for_ref = billable.get(job_ref) or []
+    has_events = bool(events_for_ref)
+
+    billing_banner_html = ""
+    if only_id or not has_events:
+        # Flat fallback: 'only' jump, or a roof with no billing map at all
+        # yet -- the page NEVER breaks on an absent/empty grind file, it
+        # falls open to the old date-order view.
+        row_blocks = [render_photo_block_html(r, collapse_map, dup_paths, twin_notes, path_to_row) for r in rows]
+        if not only_id:
+            billing_banner_html = (
+                "<div class='banner banner-note'><p>No billing map yet for this roof "
+                "&mdash; showing all photos in date order.</p></div>"
             )
-
-        has_file = bool(r.get("original_path")) and os.path.exists(r.get("original_path") or "")
-        if has_file:
-            photo_html = (
-                "<a class='photowrap' href='/thumb?id=%s' target='_blank'>"
-                "<img src='/thumb?id=%s' loading='lazy' alt='roof photo'></a>"
-                % (urllib.parse.quote(str(rid)), urllib.parse.quote(str(rid)))
+        body_content = "".join(row_blocks)
+    else:
+        groups, unmatched = group_photos_by_event(rows, events_for_ref)
+        section_blocks = []
+        for g in groups:
+            photo_html = "".join(
+                render_photo_block_html(r, collapse_map, dup_paths, twin_notes, path_to_row)
+                for r in g["photos"]
             )
-            error_html = ""
-        else:
-            photo_html = "<div class='missing'>Original file not found on disk &mdash; cannot display or flip.</div>"
-            error_html = "<div class='error-flag'>Missing on disk: flip is disabled for this photo.</div>"
-
-        toggle_html = (
-            "" if not has_file else
-            "<button class=\"toggle-btn %s\" data-id=\"%s\" data-public=\"%s\" onclick=\"flipPhoto(this)\">%s</button>"
-            % (btn_cls, html.escape(str(rid)), "1" if is_pub else "0", html.escape(btn_txt))
-        )
-
-        row_blocks.append(
-            "<div class='row photo-row' id='row-%s'>"
-            "<div class='rowhead'><span class='date-badge'>%s</span>%s</div>"
-            "%s%s"
-            "<div class='state-row'>"
-            "<span class='state-badge %s'>%s</span>%s</div>"
-            "%s"
-            "</div>"
-            % (html.escape(str(rid)), html.escape(str(date)), building_html, photo_html, note_html,
-               state_cls, state_txt, toggle_html, error_html)
-        )
+            section_blocks.append(
+                "<div class='event-group'>%s%s</div>" % (render_group_header_html(g["window"]), photo_html)
+            )
+        if unmatched:
+            photo_html = "".join(
+                render_photo_block_html(r, collapse_map, dup_paths, twin_notes, path_to_row)
+                for r in unmatched
+            )
+            unmatched_header = (
+                "<div class='group-header unmatched-header'><h2>Not yet matched to billing</h2>"
+                "<p class='unmatched-note'>These photos fall in no known billing window yet "
+                "&mdash; matching them is a search task, not a fact about the roof.</p></div>"
+            )
+            section_blocks.append("<div class='event-group'>%s%s</div>" % (unmatched_header, photo_html))
+        body_content = "".join(section_blocks)
 
     js = """
 <script>
@@ -614,10 +993,11 @@ document.addEventListener('DOMContentLoaded', updateFooter);
 """
 
     body = (
-        "<div class='banner'><h1>%s</h1><p><a href='/'>&larr; all roofs</a></p></div>"
+        "<div class='banner'><h1>%s</h1>%s<p><a href='/'>&larr; all roofs</a></p></div>"
+        "%s"
         "%s"
         "<div class='footer-bar'>Live counts: <span id='footer-counts'>%d of %d public</span></div>"
-        % (display_name_html(job_ref), "".join(row_blocks), public_now, total)
+        % (display_name_html(job_ref), sister_html, billing_banner_html, body_content, public_now, total)
     )
     return page_shell("Flip -- %s" % (resolve_name(job_ref) or job_ref), body, extra_head=js)
 

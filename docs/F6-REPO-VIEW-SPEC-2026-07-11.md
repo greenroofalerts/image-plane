@@ -61,6 +61,14 @@ For each of the tied roofs: other refs that are the same roof/site.
   (from that ref's invoice lines / phase mix), never a bare code.
 - Candidate tier: same NNNN only, no corroboration → link labelled "possibly the same
   roof". Candidates are navigation links only — NO allocation change (IP-L9).
+- **Same-site tier (added after the Olympic Mews check, per Lee's 11 Jul morning ruling
+  "same site can legitimately carry two distinct numbers … Extend the sister-ref rule"):**
+  different NNNN, same site/development — corroborated by a distinctive shared site-name
+  token (≥2 words, non-generic, e.g. "Olympic Mews") or an invoice line naming both
+  addresses (1336-21 names "repairs at 2 & 3 Olympic Mews"). Link text = works
+  description + site. A same-site ref with zero tied photos renders as a plain note
+  ("… — no photos tied yet"), never a dead link. Builder reports every same-site group
+  for orchestrator review (over-linking on generic street names is the failure mode).
 - **Olympic Mews acceptance check (Lee's named example):** the builder run MUST report
   what 301-14 and 735-16 each carry (which is green-roof maintenance, which is
   waterproofing repairs) from their invoice lines, and the two pages must cross-link

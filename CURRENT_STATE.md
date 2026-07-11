@@ -1,6 +1,33 @@
 # CURRENT_STATE.md — image-plane (LEE-411)
 
-**Last updated:** 2026-07-10 night (F2 CANDIDATE PASS + F3 READINESS chain COMPLETE, Steps 1–4.
+**11 Jul late eve — PHOTO WIRING BUILT (stages 1–3 of HANDOVER-2026-07-11-PHOTO-WIRING.md):**
+- **F5 DONE**: `visual_observations` @LeeOSplus extended (is_public default FALSE +
+  check constraint: public REQUIRES gra_media_path — dark-ship enforced by construction;
+  anon RLS policy sees only public rows) and backfilled **8,488 rows / 246 roofs**
+  (Counted by: counts.py --json same session; verified by independent SQL after insert).
+  0 public. Spec: docs/F5-VISUAL-OBSERVATIONS-ROOF-TIMELINE-2026-07-11.md. Customer
+  captions come ONLY from new `public_caption` column — lee_note (internal dictation)
+  structurally never renders customer-facing.
+- **GRA /roof timeline BUILT, branch-only** (`roof-photo-timeline` in ~/green-roof-portal,
+  d06f4ff + bfca1ae, NOT merged — Lee-gated): /api/portal/roof-photos (anon spine read,
+  signed URLs from new private GRA bucket `roof-photos`) + RoofStory section; empty state
+  + synthetic end-to-end + RLS + negative storage tests all proven locally, screenshots
+  in session scratchpad. Prod needs LEEOSPLUS_URL/LEEOSPLUS_ANON_KEY in Vercel at merge
+  time (routing-proof item).
+- **FLIP SURFACE LIVE (Lee-only, mesh): http://192.168.178.61:8788/** — flip_server.py on
+  Mini A (mirror scripts/mini_a/, restart: nohup python3 ~/image-plane/flip_server.py
+  > flip_server.log 2>&1 &). One-tap Private⇄Public per photo; flip-ON = curated copy
+  (max 1600px, EXIF/GPS stripped) → GRA bucket → spine row, fail closed; flip-OFF
+  revokes + deletes object (verify deletions via storage LIST api — Cloudflare caches
+  GETs). Real flip ON+OFF proven on 1124-19; egress ledger in
+  docs/F5-FLIP-SURFACE-SPEC-2026-07-11.md. Creds: Mini A ~/image-plane/.env.flip (600).
+- **Stage 4 (Glengarry card) deliberately NOT built**: Lee's same-day ruling blocks the
+  project-page design on the record-view comparison. Ammunition doc:
+  ~/leeos-private/CARD-PHOTO-PRICE-AMMUNITION-2026-07-11.md (money stays local).
+- Open from this build: public_caption curation UI (typing — Lee-gated design), Brighton
+  per-building pages, sister-ref join on the GRA route, Vercel envs + merge (Lee gate).
+
+**Last updated (prior):** 2026-07-10 night (F2 CANDIDATE PASS + F3 READINESS chain COMPLETE, Steps 1–4.
 Cluster sheets + ambiguous.html rebuilt WITH ranked provisional candidates — browser-curled;
 SPINELINE-READINESS.md written (228 READY / 10 NEEDS-RULE, orchestrator correction: all 7 "EXIF
 conflicts" are 2026-06-25 export artifacts → true NEEDS-RULE = 4 low-coverage roofs). Tie count

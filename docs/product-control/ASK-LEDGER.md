@@ -33,7 +33,8 @@ outrank every summary, report, and handover. Newest at top.
 - **Old GRA click-to-reveal weather guidance wanted back** (morning): "the click to
   reveal guidance monitoring on weather guidance that the OLD gra had new one not yet
   would help with that" — GRA-side item, noted here for the weather×plants thread.
-- **Batch-answering by confidence: think on it** (morning): "haha interesting add that
+- **Company-archive angle: think on it more** (morning, on the corpus as 15 years of
+  the business in pictures — book/retrospective material): "haha interesting add that
   as a thing to think about some more."
 - **Mini A backup ordered and done same morning** ("do it now"): Mini A had NO Time
   Machine destination. Now: nightly 03:50 cron tarball of the critical set (ground truth,

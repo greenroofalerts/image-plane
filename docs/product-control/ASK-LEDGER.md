@@ -6,6 +6,16 @@ outrank every summary, report, and handover. Newest at top.
 
 ## 2026-07-11
 
+- **BUILD GO: GRA portal photo timelines + Glengarry card photo/price layer** (late
+  afternoon, verbatim): "this is amazing, really encouraging - can you build this now:
+  How it integrates with the GRA portal pages … How it integrates with the Glengarry
+  enquiry-job cards … new window handover 150% here" — Lee ratified the two integration
+  descriptions as the build spec and ordered a fresh-window handover (this window at
+  150% context). **This opens the F5 gate** (photo index into the spine where GRA reads)
+  in the roof-timeline form described; operating rule = his same-morning public/private
+  ruling (everything private until, at the point of sharing, curated shots flip public).
+  Handover: ~/leeos-private/HANDOVER-2026-07-11-PHOTO-WIRING.md.
+
 - **Coord corrections + Brighton tie rule RULED** (afternoon, verbatim): "apply both
   coord corrections, brighton option a" → 175-13 map pin moves to the Raasay cluster
   GPS median; 261-13 to site postcode BH23 8EE (both per

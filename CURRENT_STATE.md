@@ -21,6 +21,9 @@ job boards. F3 stays gated on Lee seeing SPINELINE-READINESS.md.)
 - **RESUME: ~/leeos-private/HANDOVER-2026-07-11-IMAGE-PLANE-NEXT.md** (case-studies×profit
   via WealthOS repo — never ibkr-history; ref-resolution c1/c2/c11/c13/c15; HayBase
   collateral; plant IDs; gated sheets rebuild).
+- **11 Jul late PM — BUILD GO (ledgered): GRA roof photo timelines + Glengarry card
+  photo/price layer. F5 gate OPEN in roof-timeline form. RESUME:
+  ~/leeos-private/HANDOVER-2026-07-11-PHOTO-WIRING.md — fresh window, this one at 150%.**
 - **11 Jul ~15:45 — Lee ruled "apply both coord corrections, brighton option a" (ledgered):**
   job_coords 175-13→Raasay GPS median, 261-13→BH23 8EE (backup .bak_pre_coordfix_20260711);
   Brighton c1+c2 → umbrella ref 307-14 with building on every row (varley-halls 67 /

@@ -1,5 +1,36 @@
 # CURRENT_STATE.md — image-plane (LEE-411)
 
+**11 Jul ~19:45 — F6 REPO VIEW BUILT, VERIFIED, MERGED (branch f6-repo-view → main).**
+- Flip surface :8788 now groups every roof page by BILLABLE EVENT: phase header
+  (plain words) + Xero invoice cross-ref line (numbers + dates, £ amounts stripped by
+  construction), photos date-ordered inside; "Not yet matched to billing" renders last;
+  roofs with no billing map fail open to the flat view with an honest banner. Sister-ref
+  links (confirmed / candidate / same-site tiers) under the roof title, works
+  descriptions never bare codes; index shows LINKED markers.
+- `grind/billable_events.json`: 138 roofs / 612 windows; Trinity 1124-19 install = ONE
+  window "Install — June–November 2021" (Counted by: json load + window sum over the
+  file on Mini A, this turn). £ assert PASS. `grind/sister_refs.json`: 44 labels, 0
+  under 8 chars, Ainsworth/Victoria groups removed; Olympic Mews 301-14 same-site =
+  1336-21/673-16/676-16/735-16, cross-links render with works text (screenshot verified).
+- Dedupe `grind/repo_dedupe_flags.jsonl`: exact=0 (TRUE — 8,488 valid rows, 100%
+  sha256, zero same-roof dupe groups), near=0 (dHash 8,141/8,141 hashed, 0 failures,
+  hamming≤8 same-roof ±1d — corpus genuinely has no collapsible bursts), possible_twin=0,
+  prior_pass=240 (imported verdicts). (Counted by: kind Counter over flags file on
+  Mini A, this turn.) Collapse expander in flip UI exists but is proven only on a
+  synthetic pair — zero real pairs exist to show it. Sources never deleted;
+  allocation_v2.jsonl still 9,024 lines (wc -l this turn).
+- Spine: `visual_observations` gained additive `duplicate_of` + `dedupe_kind` columns
+  (migration visual_observations_dedupe_columns @LeeOSplus). 0 rows patched — correct
+  by construction: the spine holds keepers only, all 240 prior_pass paths are collapsed
+  duplicates outside the valid set (each got a REST membership probe, 0 matched).
+  Verify-after SQL this turn: 8,488 total / 0 public / 0 columns set — no row deleted.
+- Scripts mirrored + committed: build_billable_events.py, build_repo_dedupe.py,
+  push_dedupe_to_spine.py, flip_server.py (all sha256-matched laptop↔Mini A).
+- AWAITING LEE (present, don't build): facet question (repos vs filters — steel/straw
+  delivered, NO RULING); labelling speed-up plan (ordered PRESENTED first); Victoria Rd
+  = Victoria Park Bowls Club? (677-16 ↔ 1321-21 same-site join hangs on it); GRA
+  branch roof-photo-timeline merge + Vercel envs; Glengarry card record-view ruling.
+
 **11 Jul late eve +1 — REPO VIEW ordered (ledgered): billable-event grouping ×
 Xero, phase-dated (never day/week splits), sister-ref cross-links (2 Olympic Mews =
 the example), dedupe in every repo view (files never deleted). Lee confirmed: flip

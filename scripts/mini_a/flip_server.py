@@ -36,7 +36,7 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from PIL import Image
+from PIL import Image, ImageOps
 
 PORT = 8788
 ROOT = os.path.expanduser("~/image-plane")
@@ -295,6 +295,7 @@ def curate_image(original_path):
     try:
         _sips_to_jpeg(original_path, tmp_path, CURATED_MAX_EDGE)
         img = Image.open(tmp_path)
+        img = ImageOps.exif_transpose(img)
         img = img.convert("RGB")
         clean = Image.new("RGB", img.size)
         clean.putdata(list(img.getdata()))

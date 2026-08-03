@@ -1,7 +1,7 @@
 #!/bin/zsh
 set -eu
 
-MINI_B_HOST="${MINI_B_HOST:-macminibs-mac-mini}"
+MINI_B_HOST="${MINI_B_HOST:-macminib@macminibs-mac-mini}"
 MINI_B_ROOT="${MINI_B_ICLOUD_ROOT:-/Users/macminib/icloud-originals/photos}"
 LOCAL_ROOT="${ICLOUD_INTAKE_ROOT:-$HOME/image-plane/incoming/icloud}"
 SCRIPT="$(cd "$(dirname "$0")/../mini_b" && pwd)/export_icloud_photos.py"
@@ -19,8 +19,8 @@ fi
 
 mkdir -p "$LOCAL_ROOT/source"
 ssh "$MINI_B_HOST" "test -f '$MINI_B_ROOT/manifest.jsonl'"
-rsync -a --partial --append-verify "$MINI_B_HOST:$MINI_B_ROOT/manifest.jsonl" "$LOCAL_ROOT/source/manifest.jsonl"
-rsync -a --partial --append-verify "$MINI_B_HOST:$MINI_B_ROOT/assets/" "$LOCAL_ROOT/source/assets/"
+rsync -a --partial "$MINI_B_HOST:$MINI_B_ROOT/manifest.jsonl" "$LOCAL_ROOT/source/manifest.jsonl"
+rsync -a --partial "$MINI_B_HOST:$MINI_B_ROOT/assets/" "$LOCAL_ROOT/source/assets/"
 ssh "$MINI_B_HOST" "sqlite3 \"\$HOME/Pictures/Photos Library.photoslibrary/database/Photos.sqlite\" \"SELECT ZUUID FROM ZASSET WHERE ZKIND=0 AND COALESCE(ZTRASHEDSTATE,0)=0 AND COALESCE(ZHIDDEN,0)=0 ORDER BY ZUUID;\"" > "$LOCAL_ROOT/source/eligible-item-ids.txt"
 
 ARGS=(mirror --source-root "$LOCAL_ROOT/source" --destination-root "$LOCAL_ROOT" --expected-items-file "$LOCAL_ROOT/source/eligible-item-ids.txt")

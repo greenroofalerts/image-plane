@@ -285,14 +285,52 @@ class FewshotPipelineTests(unittest.TestCase):
         sources = self.ladder_sources(
             register_rows=[{"path": path, "job_ref": "1858-26", "method": "date_split", "confidence": "high"}],
             points_rows=[{"path": path, "lat": 51.5, "lon": -0.1}],
-            located={"1588-26": {"lat": 51.5, "lon": -0.1}},
+            located={"1301-21": {"lat": 51.5, "lon": -0.1}},
         )
         examples, resolution = engine.resolve_examples(target, self.teaching_for("1858-26"), self.root, sources)
         self.assertEqual(examples, [])
         self.assertIsNone(resolution["job_ref"])
         self.assertIn("1858-26", resolution["reason"])
-        self.assertIn("1588-26", resolution["reason"])
+        self.assertIn("1301-21", resolution["reason"])
         self.assertIn("goes to Lee", resolution["reason"])
+
+    def test_22a_the_known_mistype_is_one_job_not_two_sites(self):
+        """Lee, 1 Aug 2026: "1588 is a known mistype ... just combine them".
+
+        This is the exact case that was carried as ambiguous: the register said
+        1858-26, the position said 1588-26, and they stood 18 metres apart. It
+        was never two sites. It is one job typed two ways, so the lanes agree.
+        """
+        target, path = self.unknown_target("mistype.jpg", "sha-mistype")
+        sources = self.ladder_sources(
+            register_rows=[{"path": path, "job_ref": "1858-26", "method": "date_split", "confidence": "high"}],
+            points_rows=[{"path": path, "lat": 51.5, "lon": -0.1}],
+            located={"1588-26": {"lat": 51.5, "lon": -0.1}},
+        )
+        examples, resolution = engine.resolve_examples(target, self.teaching_for("1858-26"), self.root, sources)
+        self.assertEqual(resolution["job_ref"], "1858-26")
+        self.assertIsNone(resolution["reason"])
+        self.assertTrue(examples)
+
+    def test_22b_a_register_row_naming_two_lanes_stands_on_its_own(self):
+        """Lee, 1 Aug 2026: "five routes doesnt need extra".
+
+        The row already names five lanes, so the never-one-field law is met
+        inside the row. There is no position for this picture at all, and the
+        band is not high. Neither test may refuse it.
+        """
+        target, path = self.unknown_target("five-routes.jpg", "sha-five")
+        sources = self.ladder_sources(
+            register_rows=[{"path": path, "job_ref": "1858-26", "confidence": "medium",
+                            "method": "lane2_gra_sites+lane3_project_folders+lane4_xero"
+                                      "+lane5_mail+lane7_photo_register"}],
+        )
+        examples, resolution = engine.resolve_examples(target, self.teaching_for("1858-26"), self.root, sources)
+        self.assertEqual(resolution["job_ref"], "1858-26")
+        self.assertIsNone(resolution["reason"])
+        self.assertIn("lane2", resolution["method"])
+        self.assertIn("lane7", resolution["method"])
+        self.assertTrue(examples)
 
     def test_23_medium_or_low_band_gives_no_example(self):
         for band in ("medium", "low"):
@@ -318,6 +356,35 @@ class FewshotPipelineTests(unittest.TestCase):
         self.assertEqual(resolution["job_ref"], "1000-26")
         self.assertEqual(resolution["method"], "lee_answer")
         self.assertEqual([row["teaching_id"] for row in examples], ["lee-review-20260801:photo-01"])
+
+    def test_24a_lee_answer_by_the_method_alone_stands(self):
+        """The row says Lee answered it, but the band is only medium.
+
+        Split out on 5 Aug 2026. The mutation harness proved test_24 did not
+        bite: it set the method AND the band, so either one alone satisfied it
+        and neither was guarded.
+        """
+        target, path = self.unknown_target("lee-method.jpg", "sha-lee-method")
+        sources = self.ladder_sources(
+            register_rows=[{"path": path, "job_ref": "1000-26",
+                            "method": "lee_cluster_answer", "confidence": "medium"}],
+        )
+        examples, resolution = engine.resolve_examples(target, self.teaching_for(), self.root, sources)
+        self.assertEqual(resolution["job_ref"], "1000-26")
+        self.assertEqual(resolution["method"], "lee_answer")
+        self.assertTrue(examples)
+
+    def test_24b_lee_answer_by_the_band_alone_stands(self):
+        """The band says Lee confirmed it, but the method is an ordinary one."""
+        target, path = self.unknown_target("lee-band.jpg", "sha-lee-band")
+        sources = self.ladder_sources(
+            register_rows=[{"path": path, "job_ref": "1000-26",
+                            "method": "album", "confidence": "lee_confirmed"}],
+        )
+        examples, resolution = engine.resolve_examples(target, self.teaching_for(), self.root, sources)
+        self.assertEqual(resolution["job_ref"], "1000-26")
+        self.assertEqual(resolution["method"], "lee_answer")
+        self.assertTrue(examples)
 
     def test_25_no_picture_can_teach_itself_by_path_or_by_hash(self):
         photo = self.make_photo("self.jpg", b"self")

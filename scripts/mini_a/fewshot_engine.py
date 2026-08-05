@@ -146,11 +146,44 @@ LEE_ANSWER_METHODS = {"lee_cluster_answer", "lee_verdict", "lee_answer"}
 LEE_ANSWER_BANDS = {"lee_confirmed", "lee"}
 LOCATION_LIMIT_M = 150.0
 
+# Lane 1 is "the exact job reference (registry AND ALIASES)". This is the alias
+# half. A job typed two ways is ONE job, and the wrong spelling must resolve to
+# the right one wherever a job reference is read.
+#
+# Lee ruled on 1 August 2026, verbatim: "1588 is a known mistype that has worked
+# its way into even invoices - just combine them". So 1588-26 and 1858-26 are not
+# two sites 18 metres apart. They are one job typed two ways, and the wrong one
+# reached Xero as well as the photo records.
+#
+# STANDING SHAPE, worth keeping: when two references differ only by transposed
+# digits and sit metres apart, suspect a mistype before you suspect two sites,
+# and put it to Lee, who knows his own typing history.
+JOB_REF_ALIASES = {
+    "1588-26": "1858-26",
+}
+
 
 def named_job(value: object) -> str | None:
-    """Return a real job reference, or None when the field names no job."""
+    """Return a real job reference, or None when the field names no job.
+
+    Lane 1 aliases are applied here, so every reader of a job reference gets the
+    settled spelling and no caller has to remember the mistake.
+    """
     text = str(value or "").strip()
-    return None if text.lower() in NO_JOB_WORDS else text
+    if text.lower() in NO_JOB_WORDS:
+        return None
+    return JOB_REF_ALIASES.get(text.lower(), text)
+
+
+def lane_routes(method: str) -> set[str]:
+    """The lanes a recorded method names, for example lane2_gra_sites+lane4_xero.
+
+    Lee ruled on 1 August 2026, verbatim: "five routes doesnt need extra". A
+    register row whose own method names two or more lanes has already satisfied
+    the never-one-field law inside that row. Asking the position lane to confirm
+    it again is extra work for nothing.
+    """
+    return set(re.findall(r"lane\d+", str(method or "").lower()))
 
 
 def load_photo_register(path: str | Path) -> Dict[str, dict]:
@@ -163,9 +196,24 @@ def load_photo_register(path: str | Path) -> Dict[str, dict]:
 
 
 def load_located_jobs(path: str | Path) -> Dict[str, dict]:
-    """Lane 2 — the recorded located-job map. Never re-geocoded here."""
+    """Lane 2 — the recorded located-job map. Never re-geocoded here.
+
+    Lane 1 aliases are applied to the keys, so a job typed two ways cannot look
+    like two sites standing metres apart. Where both spellings are present, the
+    settled spelling is kept and the mistype is dropped.
+    """
     data = json.loads(Path(path).read_text())
-    return {ref: row for ref, row in data.items() if row.get("lat") is not None}
+    located: Dict[str, dict] = {}
+    for ref, row in data.items():
+        if row.get("lat") is None:
+            continue
+        settled = named_job(ref)
+        if settled is None:
+            continue
+        if settled in located and ref.lower() in JOB_REF_ALIASES:
+            continue
+        located[settled] = row
+    return located
 
 
 def load_photo_points(path: str | Path) -> Dict[str, Tuple[float, float]]:
@@ -195,7 +243,11 @@ def location_lane(point: Tuple[float, float] | None, located_jobs: Dict[str, dic
         distance = metres_apart(point, (float(row["lat"]), float(row["lon"])))
         if shortest is None or distance < shortest:
             nearest, shortest = ref, distance
-    return nearest if shortest is not None and shortest <= LOCATION_LIMIT_M else None
+    if shortest is None or shortest > LOCATION_LIMIT_M:
+        return None
+    # Lane 1 aliases apply here too. A job typed two ways is one job, so a
+    # mistype in the located map can never look like a second site next door.
+    return named_job(nearest)
 
 
 def is_location_method(method: str) -> bool:
@@ -238,6 +290,15 @@ def resolve_job(row: dict, register: Dict[str, dict], points: Dict[str, Tuple[fl
         return {"job_ref": None, "method": None,
                 "reason": f"The lanes disagree: the register says {registered}, "
                           f"the position says {by_location}. This one goes to Lee."}
+
+    # Lee, 1 August 2026: "five routes doesnt need extra". When the register row
+    # already names two or more lanes, the never-one-field law is satisfied
+    # inside that row. Neither the band test nor the position test may refuse it.
+    routes = lane_routes(method)
+    if len(routes) >= 2:
+        return {"job_ref": registered,
+                "method": "+".join(sorted(routes)),
+                "reason": None}
 
     if band != "high":
         return {"job_ref": None, "method": None,

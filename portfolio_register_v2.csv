@@ -1,0 +1,183 @@
+job_ref,year,site,lat,lon,geocode_status,source_folder
+0062-12,2012,Hadleigh,,,needs_address_from_folder,62-12-RES-M Hadleigh
+0406-14,2014,Hindmans Yard,,,no_match,406-14-RES-M Hindmans Yard
+0433-15,2015,,,,needs_address_from_folder,433-15-COM-M
+0970-19,2019,St Davids Rd,51.486822,-0.059823,ok,970-19 St Davids Rd
+0984-19,2019,51a Parkside,51.517758,-0.021743,ok,984-19 51a Parkside
+0992-19,2019,Bellingdon Nursery,,,no_match,992-19 Bellingdon Nursery
+0993-19,2019,14 Hall Road,51.534323,0.059852,ok,993-19 14 Hall Road
+0996-19,2019,55 Ainsworth Ave,50.813388,-0.068997,ok,996-19 55 Ainsworth Ave
+1000-19,2019,Ticehurst Hospital Keystone,,,no_match,1000-19 Ticehurst Hospital Keystone
+1009-19,2019,Priory Ticehurst,51.049611,0.398321,ok,1009-19 Priory Ticehurst
+1020-19,2019,NHG Turnberry,,,no_match,1020-19 NHG Turnberry
+1027-19,2019,Level,,,needs_address_from_folder,1027-19 Level
+1031-19,2019,Parison Close,51.467328,-0.283849,ok,1031-19 Parison Close
+1032-19,2019,Dulwich Prep,51.433736,-0.084759,ok,1032-19-GRR Dulwich Prep
+1033-19,2019,Hambridge Homes Bromley,,,no_match,1033-19 Hambridge Homes Bromley
+1037-19,2019,12 King Henry Rd,51.542735,-0.157419,ok,1037-19-GRR 12 King Henry Rd
+1040-19,2019,Lockhart St,51.521294,-0.028122,ok,1040-19 Lockhart St
+1047-19,2019,Birdlip,,,needs_address_from_folder,1047-19 Birdlip
+1051-19,2019,Llandarcy,,,needs_address_from_folder,1051-19-PUBM Llandarcy
+1062-19,2019,Bromley By Bow,51.524629,-0.012319,ok,1062-19-Bromley By Bow
+1066-19,2019,62 Sea Lane,53.535758,-0.020910,ok,1066-19-RES-M 62 Sea Lane
+1067-19,2019,64 Sea Lane,53.535769,-0.020794,ok,1067-19-RES-M 64 Sea Lane
+1068-19,2019,Loke,,,needs_address_from_folder,1068-19-RES-M Loke
+1078-19,2019,Elmsley House,53.896067,-1.951098,ok,1078-19 Elmsley House
+1080-19,2019,X&Why,51.516758,-0.067672,report_postcode,1080-19-COM-M X&Why
+1099-19,2019,Dram House,,,no_match,1099-19 Dram House
+1103-19,2019,Ryl Holloway,,,no_match,1103-19 Ryl Holloway
+1106-19,2019,445 New Cross Rd,51.475787,-0.030035,ok,1106-19 445 New Cross Rd
+1110-19,2019,,,,needs_address_from_folder,1110-19-COM-M
+1113-19,2019,,,,needs_address_from_folder,1113-19-RES-M
+1126-20,2020,Marina,,,needs_address_from_folder,1126-20 Marina
+1130-20,2020,The Bridge,51.592390,-0.334159,ok,1130-20-GRR The Bridge
+1142-20,2020,,,,needs_address_from_folder,1142-20-GRR
+1173-20,2020,10 Palace Court Gdns,51.594055,-0.137936,ok,1173-20 10 Palace Court Gdns
+1176-20,2020,Badminton School,51.485541,-2.617641,ok,1176-20 Badminton School
+1180-20,2020,50 Vera Rd,51.476166,-0.211113,ok,1180-20 50 Vera Rd
+1182-20,2020,Webster Rd,51.556476,-0.004217,ok,1182-20 Webster Rd
+1187-20,2020,,,,needs_address_from_folder,1187-20-GRR
+1194-20,2020,Caernafon,,,needs_address_from_folder,1194-20 Caernafon
+1203-20,2020,Mousehole School,50.085564,-5.539625,ok,1203-20 Mousehole School
+1205-20,2020,Crystal Court,51.425135,-0.076812,ok,1205-20 Crystal Court
+1210-20,2020,54 Cavell St,51.516135,-0.056954,ok,1210-20 54 Cavell St
+1218-20,2020,1 Cavendish Mews,51.451559,-0.017881,ok,1218-20 1 Cavendish Mews
+1226-20,2020,137a Connington Rd,,,no_match,1226-20 137a Connington Rd
+1242-20,2020,Badminton Accom block,,,no_match,1242-20 Badminton Accom block
+1261-21,2021,Roman Rd,51.521112,0.045541,ok,1261-21 Roman Rd
+1262-21,2021,58a Elfort Rd,51.556850,-0.105262,ok,1262-21 58a Elfort Rd
+1298-21,2021,66a Taunton Rd,51.611339,0.215099,ok,1298-21-GRR 66a Taunton Rd
+1301-21,2021,161 Fawe Park Rd,51.460868,-0.202503,ok,1301-21 161 Fawe Park Rd
+1304-21,2021,10 Christ,51.389716,-0.292038,ok,1304-21 10 Christ
+1308-21,2021,Clarence House,51.503984,-0.138411,ok,1308-21 Clarence House
+1319-21,2021,2a Ensor Mews,51.489991,-0.178191,ok,1319-21 2a Ensor Mews
+1320-21,2021,4 Lutwyche Mews,,,no_match,1320-21 4 Lutwyche Mews
+1322-21,2021,Orchard School,51.384661,-0.038333,ok,1322-21 Orchard School
+1331-21,2021,Badminton Accom,,,no_match,1331-21-GRR Badminton Accom
+1357-21,2021,10 Strathray Gdns,51.545353,-0.169992,ok,1357-21 10 Strathray Gdns
+1359-21,2021,Ozan,,,needs_address_from_folder,1359-21 Ozan
+1360-21,2021,QC,,,needs_address_from_folder,1360-21 QC
+1361-21,2021,East Molesey,51.408465,-0.353782,ok,1361-21 East Molesey
+1363-21,2021,Cherryfields,,,needs_address_from_folder,1363-21 Cherryfields
+1371-21,2021,16 Shipton St,51.529974,-0.070291,ok,1371-21 16 Shipton St
+1375-21,2021,Forestry England,51.651444,-0.148033,ok,1375-21 Forestry England
+1392-21,2021,31 Barrowgate Rd,51.488516,-0.268257,ok,1392-21 31 Barrowgate Rd
+1393-21,2021,Nursery,51.521212,-0.166654,ok,1393-21 Nursery
+1394-21,2021,42 Hodford Rd,51.569110,-0.198931,ok,1394-21 42 Hodford Rd
+1396-21,2021,Sydner Rd,51.556609,-0.070079,ok,1396-21 Sydner Rd
+1401-21,2021,X&WhySouth,,,needs_address_from_folder,1401-21 X&WhySouth
+1410-21,2021,23 Remington St,51.530904,-0.099644,ok,1410-21 23 Remington St
+1423-21,2021,25 The Plantation,51.468134,0.020774,ok,1423-21 25 The Plantation
+1428-21,2021,Tingrith Lakes,,,no_match,1428-21 Tingrith Lakes
+1429-21,2021,36a Lawford Rd,51.546473,-0.137847,ok,1429-21 36a Lawford Rd
+1430-21,2021,87 Woodland Rise,51.549097,-0.323038,ok,1430-21 87 Woodland Rise
+1436-21,2021,Shoeburyness,,,needs_address_from_folder,1436-21 Shoeburyness
+1440-21,2021,Point A,51.528890,-0.119400,ok,1440-21 Point A
+1443-21,2021,Liberty Point,50.911580,-1.400385,ok,1443-21 Liberty Point
+1452-21,2021,Birley FS,,,no_match,1452-21 Birley FS
+1455-21,2021,272 Finchley Rd,51.540448,-0.175646,ok,1455-21 272 Finchley Rd
+1464-21,2021,Cherry Groce,51.473385,-0.110746,ok,1464-21 Cherry Groce
+1465-21,2021,48 Ryedale,51.451855,-0.062611,ok,1465-21 48 Ryedale
+1470-21,2021,9 Chepstow Villas,51.513510,-0.198078,ok,1470-21 9 Chepstow Villas
+1473-21,2021,16 Gabriel St,51.551842,-0.216664,ok,1473-21 16 Gabriel St
+1482-22,2022,10 Adie St,,,no_match,1482-22 10 Adie St
+1486-22,2022,3 Loxford Gardens,51.557468,-0.099407,ok,1486-22 3 Loxford Gardens
+1496-22,2022,Marmont:Goldsmith,,,needs_address_from_folder,1496-22 Marmont:Goldsmith
+1501-22,2022,Elephant Park,51.492818,-0.096298,ok,1501-22 Elephant Park
+1506-22,2022,Corsica St,51.546465,-0.101922,ok,1506-22 Corsica St
+1508-22,2022,9 The Mirage,,,no_match,1508-22 9 The Mirage
+1513-22,2022,New North Rd,51.535456,-0.089206,ok,1513-22 New North Rd
+1523-22,2022,Ormskirk,,,needs_address_from_folder,1523-22 Ormskirk
+1524-22,2022,Mark Burton,52.808216,-1.604787,ok,1524-22 Mark Burton
+1528-22,2022,13 Devereux Rd,51.452794,-0.160790,ok,1528-22 13 Devereux Rd
+1535-22,2022,14a St Johns Wood Ave,,,no_match,1535-22 14a St Johns Wood Ave
+1546-22,2022,19 Withdean Cres,50.852056,-0.150654,ok,1546-22 19 Withdean Cres
+1548-22,2022,Plus X,51.525122,-0.203683,ok,1548-22 Plus X
+1555-22,2022,26 Riverton Cl,51.527997,-0.202434,ok,1555-22 26 Riverton Cl
+1556-22,2022,Ready Steady Go,53.743351,-1.599176,ok,1556-22 Ready Steady Go
+1568-22,2022,Spire View,52.558332,-0.123830,ok,1568-22 Spire View
+1569-22,2022,Auriens,,,needs_address_from_folder,1569-22 Auriens
+1574-22,2022,91 Arbuthnot Rd,51.470315,-0.046048,ok,1574-22 91 Arbuthnot Rd
+1581-22,2022,Purley Court,51.334376,-0.111224,ok,1581-22 Purley Court
+1582-22,2022,Cairncross Mews,51.580117,-0.121610,ok,1582-22 Cairncross Mews
+1583-22,2022,5 Old Bailey,51.514282,-0.102254,ok,1583-22 5 Old Bailey
+1584-22,2022,3 Crowns,51.527119,-0.087739,ok,1584-22 3 Crowns
+1585-22,2022,Calthorpe CG,51.525684,-0.114002,ok,1585-22 Calthorpe CG
+1588-23,2023,1a Downhurst,51.614159,-0.257877,ok,1588-23 1a Downhurst
+1589-23,2023,Whitehawk,,,needs_address_from_folder,1589-23 Whitehawk
+1593-23,2023,14 Knatchbull,51.541181,-0.258677,ok,1593-23 14 Knatchbull
+1617-23,2023,61b Elizabeth Ave,51.562276,0.087986,ok,1617-23 61b Elizabeth Ave
+1619-23,2023,Spyways,,,needs_address_from_folder,1619-23 Spyways
+1633-23,2023,Mona Rd,51.471064,-0.051276,ok,1633-23 Mona Rd
+1635-23,2023,117a Bellenden,51.465422,-0.072668,ok,1635-23 117a Bellenden
+1641-23,2023,Greek St,51.513539,-0.130519,ok,1641-23 Greek St
+1660-23,2023,Balham Park Rd,51.442344,-0.155714,ok,1660-23 Balham Park Rd
+1667-23,2023,RPOAT,,,needs_address_from_folder,1667-23 RPOAT
+1671-23,2023,34 Allen,51.525956,0.208822,ok,1671-23 34 Allen
+1672-23,2023,E12 O HARA,56.002725,-3.814668,ok,1672-23 E12 O HARA
+1678-23,2023,Shoeburyness,,,needs_address_from_folder,1678-23 Shoeburyness
+1681-24,2024,Cumberland,,,needs_address_from_folder,1681-24 Cumberland
+1685-24,2024,Lloyd Park,51.364166,-0.080696,ok,1685-24 Lloyd Park
+1686-24,2024,Lawrence Mews,51.462460,-0.225045,ok,1686-24 Lawrence Mews
+1701-24,2024,147 De Beauvoir,51.540564,-0.080131,ok,1701-24 147 De Beauvoir
+1705-24,2024,Riverside East,51.495074,0.070735,ok,1705-24 Riverside East
+1712-24,2024,10DPR,51.557933,-0.146037,report_postcode,1712-24 10DPR
+1719-24,2024,427 Hornsey,51.587364,-0.120967,ok,1719-24 427 Hornsey
+1720-24,2024,93 Nelson Rd,51.530544,0.186502,ok,1720-24 93 Nelson Rd
+1721-24,2024,Kingston,,,needs_address_from_folder,1721-24 Kingston
+1723-24,2024,Tungate,51.235203,-0.571635,report_postcode,1723-24 Tungate
+1743-24,2024,123 Goodhart,51.388606,-0.001395,ok,1743-24 123 Goodhart
+1747-24,2024,Bridge,50.868372,0.599721,report_postcode,1747-24 Bridge
+1752-24,2024,454 Baddow Rd,51.538703,-0.094102,ok,1752-24 454 Baddow Rd
+1760-25,2025,7 Hambledon,51.448744,-0.204402,ok,1760-25 7 Hambledon
+1772-25,2025,85HP GRR,,,no_match,1772-25 85HP GRR
+1782-25,2025,52 Pensford,51.472764,-0.283038,ok,1782-25 52 Pensford
+1794-25,2025,92 BPR SHED,,,no_match,1794-25 92 BPR SHED
+1809-25,2025,Outhouse,51.414561,-0.264846,ok,1809-25 Outhouse
+1812-25,2025,85b Upper Clapton,51.566838,-0.060570,ok,1812-25 85b Upper Clapton
+1816-25,2025,24 Lowther,51.476886,-0.246045,ok,1816-25 24 Lowther
+1819-25,2025,2 Olympic,51.546434,-0.012893,ok,1819-25 2 Olympic
+1829-25,2025,118b NHS,51.478130,0.116670,ok,1829-25 118b NHS
+1831-25,2025,KX,,,needs_address_from_folder,1831-25 KX
+1703-24,2024,THE HICKMAN,51.516758,-0.067672,report_postcode,
+1729-24,2024,HIGH TREES,52.819845,-1.439774,report_postcode,
+1739-24,2024,AVELING CENTRE,,,report_no_postcode,
+1745-24,2024,F4 MARMONT,51.476401,-0.066182,report_postcode,
+1754-24,2024,31 EMBLETON RD,51.462398,-0.019785,report_postcode,
+1756-24,2024,,,,report_no_postcode,
+1770-25,2025,,50.853382,0.549867,report_postcode,
+1801-25,2025,3 STATION APPROACH,51.321448,-0.135697,report_postcode,
+1806-25,2025,CAYMAN HOUSE,51.462318,-0.003924,report_postcode,
+1832-25,2025,49 Grundreda Rd,50.878744,-0.00427,report_postcode,
+1837-25,2025,65 Clifton Hill,51.536011,-0.184145,report_postcode,
+1851-26,2026,CANNING TOWN,,,report_no_postcode,
+1855-26,2026,35 WRENTHAM,51.536398,-0.218145,report_postcode,
+1856-26,2026,45 CORNWALL,51.60066,-0.11861,report_postcode,
+1859-26,2026,2 CUMBERLAND,,,report_no_postcode,
+1860-26,2026,3 FLEET ST,50.830697,-0.139027,report_postcode,
+1867-26,2026,261 Railton Rd,51.453734,-0.103296,report_postcode,
+1871-26,2026,PURLEY COURT,51.342968,-0.108174,report_postcode,
+556-15,2015,CHERRYFIELDS,51.602947,-0.562091,report_postcode,
+1343-21,2021,RBKC 2025 GREEN ROOF,,,report_no_postcode,
+1379-21,2021,KTH GREEN ROOF,51.502388,-0.195266,report_postcode,
+1646-23,2023,AUT 24 SLGC GREEN ROOF,51.547818,-0.006369,report_postcode,
+1742-24,2024,,51.590586,-0.018517,report_postcode,
+433-15,2015,LBHF 2425 GREEN ROOF,,,report_no_postcode,
+898-18,2018,ISLAND WALL,51.348139,1.012507,report_postcode,
+1321-21,2021,VICTORIA BOWLS PORTSLADE GREEN ROOF,50.836673,-0.210582,report_postcode,
+1364-21,2021,STREAT FARM GR,50.895777,-0.080334,report_postcode,
+1481-22,2022,2c Granville Rd,51.427711,0.104171,report_postcode,
+1595-23,2023,11 Lidfield Rd,51.553438,-0.086789,report_postcode,
+1598-23,2023,10 STRATHRAY,51.545513,-0.170022,report_postcode,
+1606-23,2023,6 Malvern Rd Green Roof,51.540112,-0.067692,report_postcode,
+1685-23,2023,LBWF LLOYD AVELING GREEN ROOF,,,report_no_postcode,
+1692-24,2024,CHURCH LANE KINGSTON,50.856651,-0.027777,report_postcode,
+1704-24,2024,SILCHESTER RD,51.514746,-0.216569,report_postcode,
+1744-24,2024,24 WARWICK AVE,51.522574,-0.183426,report_postcode,
+1751-24,2024,5 LEBANON PARK GREEN ROOF,51.449141,-0.322374,report_postcode,
+1787-25,2025,SILVERWOOD,54.881338,-3.812532,report_postcode,
+1810-25,2025,AXO ISLINGTON GREEN ROOF,51.559789,-0.121984,report_postcode,
+1811-25,2025,AXO CAMDEN GREEN ROOF,51.550126,-0.134585,report_postcode,
+1830-25,2025,PURLEY COURT,,,report_no_postcode,
+1836-25,2025,DYLON WORK GREEN ROOF,51.424174,-0.032887,report_postcode,
+777-17,2017,LEMO GREEN ROOF,50.81504,-0.369991,report_postcode,

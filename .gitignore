@@ -14,3 +14,7 @@ tests/fixtures/generated/
 *.heic
 *.HEIC
 *.JPG
+*.mp4
+*.mov
+cabinet/
+writer.lock

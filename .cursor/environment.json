@@ -1,0 +1,10 @@
+{
+  "name": "image-plane",
+  "install": "bash .cursor/install.sh",
+  "terminals": [
+    {
+      "name": "ollama",
+      "command": "if [ -x ./bin/bin/ollama ]; then OLLAMA_HOST=127.0.0.1:11434 exec ./bin/bin/ollama serve; else echo 'ollama runtime not installed; caption stage disabled (ingest/dedup/status/tests unaffected)'; sleep infinity; fi"
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+#!/usr/bin/env python3
+"""Minimal Linux-compatible `sips` shim for the image-plane dev environment.
+
+macOS ships `sips`; the iCloud-intake picture-hash lane
+(`scripts/mini_b/export_icloud_photos.py`) shells out to it to make a small
+JPEG thumbnail before hashing. Linux has no `sips`, so this shim reproduces
+just the one invocation the codebase uses:
+
+    sips -s format jpeg -Z <edge> <input> --out <output>
+
+It uses Pillow (already a project dependency) and, when available, pillow-heif
+so HEIC originals still open. Anything it does not understand is ignored so the
+`check=False` caller keeps its graceful "return []" behaviour.
+"""
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+
+def _register_heif() -> None:
+    try:
+        import pillow_heif  # type: ignore
+
+        pillow_heif.register_heif_opener()
+    except Exception:
+        pass
+
+
+def main(argv: list[str]) -> int:
+    edge: int | None = None
+    out: Path | None = None
+    inputs: list[Path] = []
+
+    i = 0
+    while i < len(argv):
+        arg = argv[i]
+        if arg == "-Z" and i + 1 < len(argv):
+            try:
+                edge = int(argv[i + 1])
+            except ValueError:
+                edge = None
+            i += 2
+            continue
+        if arg == "--out" and i + 1 < len(argv):
+            out = Path(argv[i + 1])
+            i += 2
+            continue
+        if arg in ("-s", "--setProperty") and i + 2 < len(argv):
+            # e.g. "-s format jpeg" — format is handled implicitly by the
+            # output extension / explicit JPEG save below.
+            i += 3
+            continue
+        if arg.startswith("-"):
+            i += 1
+            continue
+        inputs.append(Path(arg))
+        i += 1
+
+    if out is None or not inputs:
+        sys.stderr.write("sips-shim: missing --out or input\n")
+        return 1
+
+    _register_heif()
+    from PIL import Image
+
+    src = inputs[0]
+    try:
+        with Image.open(src) as image:
+            image = image.convert("RGB")
+            if edge:
+                image.thumbnail((edge, edge), Image.Resampling.LANCZOS)
+            out.parent.mkdir(parents=True, exist_ok=True)
+            image.save(out, "JPEG", quality=90)
+    except Exception as exc:  # match sips: fail quietly-ish, non-zero exit
+        sys.stderr.write(f"sips-shim: {exc}\n")
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))

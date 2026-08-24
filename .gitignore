@@ -1,5 +1,7 @@
 .venv/
 bin/
+# but keep the Cloud Agent dev-environment config (.cursor/bin/sips shim)
+!.cursor/bin/
 __pycache__/
 *.egg-info/
 .pytest_cache/

@@ -332,6 +332,8 @@ def unpack_zips(album_dir, run_log):
     orig = album_dir / "originals"
     orig.mkdir(exist_ok=True)
     for z in sorted(album_dir.glob("*.zip")):
+        if z.name.startswith("."):
+            continue  # pathlib glob also matches our hidden .unpacked- markers
         markfile = album_dir / (".unpacked-" + z.name)
         if markfile.exists():
             continue

@@ -1067,7 +1067,52 @@ def apply_finding_action(data):
     state["finding_edits"] = edits
     state["split_findings"] = splits
     _save_state(state)
+    _record_ruling_to_spine(fid, action, note, now)
     return True, action
+
+
+def _record_ruling_to_spine(fid, action, note, when):
+    """A ruling on a finding is business memory, not just a button state.
+
+    Writes one row to the memory spine (LeeOSplus public.observations).
+    If the spine is unreachable, the row waits in the worker's outbox and
+    the daily worker retries it. The page state above is already saved,
+    so a spine fault never loses the ruling and never breaks the page.
+    """
+    row = {
+        "source": "image_plane_findings",
+        "source_id": "%s:%s:%s" % (JOB_REF, fid, when),
+        "observed_at": when,
+        "raw_excerpt": ("Finding %s on job %s: %s. %s"
+                        % (fid, JOB_REF, action, note or "(no note)")).strip(),
+        "confidence": "lee_confirmed",
+        "extracted_fields": {"job_ref": JOB_REF, "finding_id": fid,
+                             "action": action, "note": note,
+                             "surface": "job_screen findings page"},
+        "source_metadata": {"machine": "mini-a", "recorded_by": "job_screen.py"},
+    }
+    try:
+        env = _load_env(ENV_PATH)
+        url = env.get("LEEOSPLUS_URL", "").rstrip("/")
+        key = env.get("LEEOSPLUS_SERVICE_KEY", "")
+        if not url or not key:
+            raise RuntimeError("no spine credential")
+        req = urllib.request.Request(
+            url + "/rest/v1/observations",
+            data=json.dumps(row).encode(),
+            headers={"apikey": key, "Authorization": "Bearer " + key,
+                     "Content-Type": "application/json"},
+            method="POST")
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            if resp.status not in (200, 201):
+                raise RuntimeError("spine said %s" % resp.status)
+    except Exception:
+        try:
+            os.makedirs(WORKER_DIR, exist_ok=True)
+            with open(SPINE_OUTBOX_PATH, "a") as f:
+                f.write(json.dumps(row) + "\n")
+        except Exception:
+            traceback.print_exc()
 
 
 # --------------------------------------------------------------------------
@@ -1415,6 +1460,176 @@ def _safe_media_name(name):
     return name
 
 
+# --------------------------------------------------------------------------
+# Daily-worker surfaces: the Attention page and generic album/job views.
+# Everything above this line renders 1892-26 exactly as before.
+# --------------------------------------------------------------------------
+
+WORKER_DIR = os.path.join(ROOT, "incoming", "worker")
+ATTENTION_PATH = os.path.join(WORKER_DIR, "attention.json")
+SPINE_OUTBOX_PATH = os.path.join(WORKER_DIR, "spine_outbox.jsonl")
+INBOX_DIR = os.path.join(ROOT, "incoming", "google")
+SAFE_SLUG_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._ -]{0,79}$")
+SAFE_WFILE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._ -]*\.(jpg|jpeg|png|heic|mov|mp4)$", re.I)
+GENERIC_JOB_RE = re.compile(r"^/job/(\d{3,4}-\d{2})$")
+ALBUM_PAGE_RE = re.compile(r"^/album/([A-Za-z0-9][A-Za-z0-9._ -]{0,79})$")
+
+PAGE_CSS = ("body{background:#12110f;color:#efe6d6;font:15px/1.5 -apple-system,"
+            "BlinkMacSystemFont,Segoe UI,sans-serif;max-width:1100px;margin:0 auto;"
+            "padding:24px 24px 80px}a{color:#c4a35a}h1{font-size:22px}"
+            ".card{background:#1c1a17;border:1px solid #3a342b;border-radius:12px;"
+            "padding:14px 18px;margin:0 0 18px}"
+            ".chip{font-size:11px;padding:2px 9px;border-radius:999px;background:#3a2618;"
+            "color:#f0c09a;text-transform:uppercase;letter-spacing:.05em}"
+            ".chip.q{background:#3a1c1c;color:#f0b0b0}"
+            ".muted{color:#9a8f7c}.grid{display:grid;grid-template-columns:repeat("
+            "auto-fill,minmax(220px,1fr));gap:12px;margin-top:10px}"
+            ".grid img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;"
+            "background:#000}pre{white-space:pre-wrap;background:#181712;border:1px solid "
+            "#3a342b;border-radius:8px;padding:10px;font-size:12.5px}")
+
+
+def _read_json_file(path, fallback):
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except Exception:
+        return fallback
+
+
+def _album_dirs_for_job(job_ref):
+    out = []
+    if not os.path.isdir(INBOX_DIR):
+        return out
+    for name in sorted(os.listdir(INBOX_DIR)):
+        d = os.path.join(INBOX_DIR, name)
+        if not os.path.isdir(d) or name == JOB_REF:
+            continue
+        prog = _read_json_file(os.path.join(d, "PROGRESS.json"), {})
+        if prog.get("job_ref") == job_ref:
+            out.append((name, prog))
+    return out
+
+
+def _album_readings(slug):
+    out = []
+    p = os.path.join(INBOX_DIR, slug, "readings.jsonl")
+    if os.path.isfile(p):
+        for line in open(p):
+            try:
+                out.append(json.loads(line))
+            except Exception:
+                pass
+    return out
+
+
+def _render_album_cards(slug):
+    prog = _read_json_file(os.path.join(INBOX_DIR, slug, "PROGRESS.json"), {})
+    ident = _read_json_file(os.path.join(INBOX_DIR, slug, "IDENTITY.json"), {}).get("identity", {})
+    manifest = _read_json_file(os.path.join(INBOX_DIR, slug, "MANIFEST.json"), {"files": {}})
+    readings = {r.get("file"): r for r in _album_readings(slug)}
+    cards = []
+    for rel, entry in sorted(manifest.get("files", {}).items()):
+        if entry.get("kind") != "image" or entry.get("duplicate_of"):
+            continue
+        stem = os.path.splitext(os.path.basename(rel))[0]
+        r = readings.get(rel) or {}
+        cap = _html_esc(r.get("caption") or "not read yet")
+        writing = (r.get("visible_writing") or "").strip()
+        wr = ""
+        if writing and writing != "NO WORDS ON THIS PAGE":
+            wr = "<pre>%s</pre>" % _html_esc(writing[:600])
+        cards.append(
+            '<div class="card"><img src="/worker-media/%s/thumbs/%s.jpg" '
+            'style="width:100%%;border-radius:8px;background:#000" loading="lazy">'
+            '<div style="margin-top:8px"><b>%s</b> <span class="muted">%s</span></div>'
+            '<div><span class="chip">machine reading</span> %s</div>%s</div>'
+            % (urllib.parse.quote(slug), urllib.parse.quote(stem),
+               _html_esc(os.path.basename(rel)),
+               _html_esc(entry.get("taken_at") or ""), cap, wr))
+    return prog, ident, cards
+
+
+def render_album_page(slug):
+    prog, ident, cards = _render_album_cards(slug)
+    state = prog.get("identity") or "unprocessed"
+    chip = ('<span class="chip q">quarantined — identity uncertain</span>'
+            if state == "quarantined" else
+            '<span class="chip">%s</span>' % _html_esc(state))
+    ident_block = ("<pre>%s</pre>" % _html_esc(json.dumps(ident, indent=2)[:2000])) if ident else ""
+    return ("<!DOCTYPE html><html><head><meta charset='utf-8'><title>album %s</title>"
+            "<style>%s</style></head><body>"
+            "<p><a href='/attention'>&larr; attention</a></p>"
+            "<h1>Album: %s %s</h1>"
+            "<p class='muted'>Machine suggestions only. Nothing here is a confirmed "
+            "fact until a person rules on it. Quarantined media is attached to no "
+            "customer and no site.</p>%s"
+            "<div class='grid'>%s</div></body></html>"
+            % (_html_esc(slug), PAGE_CSS, _html_esc(prog.get("album_name") or slug),
+               chip, ident_block, "".join(cards)))
+
+
+def render_generic_job_page(job_ref):
+    albums = _album_dirs_for_job(job_ref)
+    if not albums:
+        return None
+    parts = []
+    for slug, prog in albums:
+        _, ident, cards = _render_album_cards(slug)
+        fp = _read_json_file(os.path.join(INBOX_DIR, slug, "findings_proposed.json"), {})
+        fhtml = ""
+        for f in fp.get("findings", []):
+            fhtml += ('<div class="card"><b>%s</b> <span class="chip">%s</span>'
+                      '<div class="muted">%s</div><div>%s</div></div>'
+                      % (_html_esc(f.get("id", "")), _html_esc(f.get("state", "")),
+                         _html_esc(f.get("uncertain", "")),
+                         _html_esc(f.get("may_establish", ""))))
+        parts.append("<h2>Album %s</h2>%s<div class='grid'>%s</div>"
+                     % (_html_esc(prog.get("album_name") or slug), fhtml, "".join(cards)))
+    return ("<!DOCTYPE html><html><head><meta charset='utf-8'><title>job %s</title>"
+            "<style>%s</style></head><body><p><a href='/attention'>&larr; attention</a></p>"
+            "<h1>Job %s</h1><p class='muted'>Daily-worker evidence view. Machine "
+            "suggestions are labelled; a person's ruling is the only confirmation.</p>"
+            "%s</body></html>"
+            % (_html_esc(job_ref), PAGE_CSS, _html_esc(job_ref), "".join(parts)))
+
+
+def render_attention_page():
+    data = _read_json_file(ATTENTION_PATH, {"entries": [], "built_at": "never"})
+    rows = []
+    for e in data.get("entries", []):
+        kind = e.get("kind", "")
+        why = _html_esc(e.get("why", ""))
+        title = _html_esc(e.get("album_name") or e.get("album") or e.get("job_ref") or kind)
+        link = e.get("link")
+        imgs = "".join('<img src="%s" loading="lazy">' % _html_esc(u)
+                       for u in (e.get("images") or [])[:8])
+        q = ("<div><b>Question:</b> %s</div>" % _html_esc(e["question"])) if e.get("question") else ""
+        ev = ""
+        if e.get("identity_evidence"):
+            ev = "<pre>%s</pre>" % _html_esc(json.dumps(e["identity_evidence"], indent=2)[:1200])
+        lk = ('<div><a href="%s">open</a></div>' % _html_esc(link)) if link else ""
+        rows.append('<div class="card"><span class="chip q">%s</span> <b>%s</b>'
+                    "<div>%s</div>%s%s<div class='grid'>%s</div>%s</div>"
+                    % (_html_esc(kind), title, why, q, ev, imgs, lk))
+    if not rows:
+        rows = ["<div class='card'>Nothing is waiting. The worker has no open questions.</div>"]
+    return ("<!DOCTYPE html><html><head><meta charset='utf-8'><title>Image Plane attention</title>"
+            "<style>%s</style></head><body><h1>Attention — things waiting on a person</h1>"
+            "<p class='muted'>Built %s by the daily worker. "
+            "<a href='/job/1892-26'>1892-26 evidence review</a></p>%s</body></html>"
+            % (PAGE_CSS, _html_esc(data.get("built_at", "")), "".join(rows)))
+
+
+def attention_next():
+    """One machine-readable answer: the next job waiting on a review."""
+    data = _read_json_file(ATTENTION_PATH, {"entries": []})
+    for e in data.get("entries", []):
+        if e.get("kind") in ("identity_uncertain", "findings_waiting"):
+            return {"waiting": True, "entry": e}
+    return {"waiting": False, "entry": None}
+
+
 class JobHandler(BaseHTTPRequestHandler):
     server_version = "ImagePlaneJobScreen/1892-26"
 
@@ -1558,6 +1773,62 @@ class JobHandler(BaseHTTPRequestHandler):
                 ".jpeg": "image/jpeg",
             }.get(ext, "application/octet-stream")
             self._send_file(os.path.join(ORIG_DIR, name), ctype)
+            return
+        if path == "/attention":
+            try:
+                self._send(200, render_attention_page())
+            except Exception:
+                traceback.print_exc()
+                self._send(500, "attention page failed", "text/plain; charset=utf-8")
+            return
+        if path == "/api/attention":
+            self._send_json(200, _read_json_file(ATTENTION_PATH, {"entries": []}))
+            return
+        if path == "/api/attention/next":
+            self._send_json(200, attention_next())
+            return
+        m = ALBUM_PAGE_RE.match(urllib.parse.unquote(path))
+        if m and SAFE_SLUG_RE.match(m.group(1)):
+            slug = m.group(1)
+            if os.path.isdir(os.path.join(INBOX_DIR, slug)):
+                try:
+                    self._send(200, render_album_page(slug))
+                except Exception:
+                    traceback.print_exc()
+                    self._send(500, "album page failed", "text/plain; charset=utf-8")
+                return
+        m = GENERIC_JOB_RE.match(path)
+        if m and m.group(1) != JOB_REF:
+            try:
+                body = render_generic_job_page(m.group(1))
+            except Exception:
+                traceback.print_exc()
+                body = None
+            if body is None:
+                self._send(404, "no daily-worker evidence for this job yet",
+                           "text/plain; charset=utf-8")
+            else:
+                self._send(200, body)
+            return
+        if path.startswith("/worker-media/"):
+            parts = [urllib.parse.unquote(p) for p in path.split("/")[2:] if p]
+            # /worker-media/<album>/<thumbs|originals>/<file> or /<album>/<file>
+            if len(parts) in (2, 3):
+                slug = parts[0]
+                sub = parts[1] if len(parts) == 3 else ""
+                name = os.path.basename(parts[-1])
+                if (SAFE_SLUG_RE.match(slug) and SAFE_WFILE_RE.match(name)
+                        and sub in ("", "thumbs", "originals")):
+                    fpath = os.path.join(INBOX_DIR, slug, sub, name) if sub else \
+                        os.path.join(INBOX_DIR, slug, name)
+                    ext = os.path.splitext(name)[1].lower()
+                    ctype = {".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+                             ".png": "image/png", ".heic": "image/heic",
+                             ".mov": "video/quicktime", ".mp4": "video/mp4"}.get(
+                        ext, "application/octet-stream")
+                    self._send_file(fpath, ctype)
+                    return
+            self._send(400, "bad worker media path", "text/plain")
             return
         self._send(404, "not found", "text/plain")
 

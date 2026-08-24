@@ -1,0 +1,16 @@
+{
+  "job_ref": "1892-26",
+  "site_identity": "Greengage, 6 Pancras Square",
+  "visit": {
+    "date": "2026-08-18",
+    "kind": "diagnostic inspection",
+    "source": "Lee sent write-up and site-access emails, 18–20 Aug 2026"
+  },
+  "existing_report": {
+    "filename": "1892-26 6PS DIAGNOSTIC SURVEY AUG 2026.pdf",
+    "sent_at": "2026-08-20T15:48:04Z",
+    "gmail_message_id": "1a01fdbaabe712b1",
+    "source": "lee_sent_writeup",
+    "note": "Reuse this confirmed diagnosis. Do not rewrite it. Replace only the manual image gathering with a named Image Plane selection."
+  }
+}

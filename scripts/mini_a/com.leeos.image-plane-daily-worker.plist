@@ -4,6 +4,14 @@
 <dict>
   <key>Label</key>
   <string>com.leeos.image-plane-daily-worker</string>
+  <key>LimitLoadToSessionType</key>
+  <array>
+    <string>Aqua</string>
+    <string>Background</string>
+    <string>LoginWindow</string>
+    <string>StandardIO</string>
+    <string>System</string>
+  </array>
   <key>ProgramArguments</key>
   <array>
     <string>/usr/bin/python3</string>

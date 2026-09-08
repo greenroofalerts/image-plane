@@ -408,6 +408,39 @@ def make_thumb(src, dest):
     return to_jpg_1024(src, dest)
 
 
+_PRIOR_READINGS = None  # Built lazily once per worker process, not per image.
+
+
+def successful_reading(record, sha):
+    """A log entry is complete only when both current readings are present."""
+    return (bool(sha) and record.get("sha256") == sha
+            and record.get("reading_version") == READING_VERSION
+            and not record.get("error")
+            and isinstance(record.get("caption"), str)
+            and bool(record["caption"].strip())
+            and isinstance(record.get("visible_writing"), str)
+            and bool(record["visible_writing"].strip()))
+
+
+def prior_reading(sha, current_album):
+    """Recover the full result behind an older cross-album index marker."""
+    global _PRIOR_READINGS
+    if _PRIOR_READINGS is None:
+        _PRIOR_READINGS = {}
+        for ledger in sorted(INBOX.glob("*/readings.jsonl")):
+            for line in ledger.read_text().splitlines():
+                try:
+                    record = json.loads(line)
+                except (ValueError, TypeError):
+                    continue
+                if isinstance(record, dict) and successful_reading(record, record.get("sha256")):
+                    _PRIOR_READINGS[record["sha256"]] = (record, str(ledger))
+    record, location = _PRIOR_READINGS.get(sha, (None, None))
+    if location == str(current_album / "readings.jsonl"):
+        return None, None
+    return record, location
+
+
 def reading_stage(album_dir, progress, manifest, run_log):
     """Read each unique new image once with the two recorded instruction sets."""
     ledger_path = album_dir / "readings.jsonl"
@@ -416,7 +449,10 @@ def reading_stage(album_dir, progress, manifest, run_log):
     if ledger_path.exists():
         for line in ledger_path.read_text().splitlines():
             try:
-                done_here.add(json.loads(line)["sha256"])
+                record = json.loads(line)
+                sha = record.get("sha256")
+                if successful_reading(record, sha):
+                    done_here.add(sha)
             except Exception:
                 pass
     if not stage_done(progress, "reading_started"):
@@ -434,14 +470,17 @@ def reading_stage(album_dir, progress, manifest, run_log):
         if sha in done_here:
             continue
         if READING_VERSION in index.get(sha, []):
-            # already read in another album: point at it, do not re-run the model
-            with open(ledger_path, "a") as f:
-                f.write(json.dumps({"sha256": sha, "file": rel,
-                                    "reading_version": READING_VERSION,
-                                    "reused_existing_reading": True,
-                                    "ts": now_utc()}) + "\n")
-            done_here.add(sha)
-            continue
+            # An index marker alone is not a reading. Keep the complete result
+            # so existing filing and display readers can actually consume it.
+            previous, previous_path = prior_reading(sha, album_dir)
+            if previous is not None:
+                reused = dict(previous, file=rel, album=album_dir.name,
+                              reused_existing_reading=True,
+                              reused_from=previous_path, reused_at=now_utc())
+                with open(ledger_path, "a") as f:
+                    f.write(json.dumps(reused) + "\n")
+                done_here.add(sha)
+                continue
         src = album_dir / rel
         stemname = Path(rel).stem
         thumb = thumbs / (stemname + ".jpg")
@@ -476,10 +515,16 @@ def reading_stage(album_dir, progress, manifest, run_log):
                                           "instruction set exists; blocker recorded "
                                           "on the Attention page"),
                "ts": now_utc()}
+        if not successful_reading(rec, sha):
+            log(run_log, "%s: incomplete model reading for %s; will retry" %
+                (album_dir.name, rel))
+            break
         with open(ledger_path, "a") as f:
             f.write(json.dumps(rec) + "\n")
         index.setdefault(sha, []).append(READING_VERSION)
         save_json(READ_INDEX, index)
+        if _PRIOR_READINGS is not None:
+            _PRIOR_READINGS[sha] = (rec, str(ledger_path))
         done_here.add(sha)
         count += 1
         log(run_log, "%s: read %s (%.0fs+%.0fs)" % (album_dir.name, rel, secs1, secs2))
@@ -490,6 +535,12 @@ def reading_stage(album_dir, progress, manifest, run_log):
         mark(album_dir, progress, "reading_completed",
              {"images_read": len(unique_images)})
         log(run_log, "%s: reading complete (%d unique images)" % (album_dir.name, len(unique_images)))
+    else:
+        # Clear an older false completion stamp when a failed or obsolete
+        # reading is discovered. Preserve successful per-image work.
+        progress.get("stages", {}).pop("reading_completed", None)
+        progress.pop("images_read", None)
+        save_json(progress_path(album_dir), progress)
     return count
 
 
@@ -519,8 +570,12 @@ def filing_stage(album_dir, progress, manifest, ident, env, run_log):
             continue
         src = album_dir / rel
         dest = cab / Path(rel).name
+        if dest.is_file() and sha256_file(dest) != entry["sha256"]:
+            raise ValueError("cabinet filename collision for %s; existing file preserved" % rel)
         if not dest.is_file():
             subprocess.check_call(["cp", "-p", str(src), str(dest)])
+        if sha256_file(dest) != entry["sha256"]:
+            raise ValueError("cabinet bytes do not match manifest for %s" % rel)
         thumb = album_dir / "thumbs" / (Path(rel).stem + ".jpg")
         cab_thumb = cab_thumbs / (Path(rel).stem + ".jpg")
         if thumb.is_file() and not cab_thumb.is_file():
@@ -769,6 +824,7 @@ def main():
             try:
                 summary["albums"][slug] = process_album(slug, env, run_log)
             except Exception as e:
+                summary["result"] = "error"
                 summary["albums"][slug] = "error: %s" % type(e).__name__
                 log(run_log, "%s: ERROR %s: %s" % (slug, type(e).__name__, e))
         retry_spine_outbox(env, run_log)
@@ -779,7 +835,7 @@ def main():
         append_run(summary)
         drop_lock()
     log(run_log, "run finished: %s" % json.dumps(summary)[:400])
-    return 0
+    return 0 if summary["result"] == "ok" else 1
 
 
 if __name__ == "__main__":

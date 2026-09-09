@@ -52,6 +52,17 @@ def capture_day(path,known=None):
  if known and re.fullmatch(r'\d{4}-\d{2}-\d{2}',known):return known,'historical allocation date; not reverified'
  return None,'date unavailable'
 
+def capture_gps(path):
+ exif='/opt/homebrew/bin/exiftool'
+ if not Path(exif).exists():return None
+ try:
+  r=subprocess.run([exif,'-j','-n','-GPSLatitude','-GPSLongitude',str(path)],capture_output=True,text=True,timeout=20)
+  if r.returncode:return None
+  data=json.loads(r.stdout)[0]
+  return {'lat':data.get('GPSLatitude'),'lon':data.get('GPSLongitude')}
+ except (OSError,ValueError,IndexError,subprocess.TimeoutExpired):return None
+
+
 def make_thumb(path,sha,state):
  dest=state/'thumbs'/(sha+'.jpg');dest.parent.mkdir(exist_ok=True)
  if dest.exists() and dest.read_bytes()[:2]==b'\xff\xd8':return dest
@@ -60,28 +71,23 @@ def make_thumb(path,sha,state):
  if r.returncode or not tmp.exists() or tmp.read_bytes()[:2]!=b'\xff\xd8':raise ValueError('original could not be rendered')
  os.replace(tmp,dest);return dest
 
-def local_labels(reader,path,terms,examples,model):
- # Reuse the deployed conversion routine's input contract and local Ollama
- # transport, with a strict response boundary instead of malformed -> [] success.
- import base64,urllib.request
+def local_labels(reader,path,terms,examples,model,audit_root=None):
+ from collection_reader import read_labels
  with tempfile.TemporaryDirectory(prefix='image-plane-label-') as t:
   dest=Path(t)/'input.jpg'
   r=subprocess.run(['sips','-s','format','jpeg','-Z','1100',path,'--out',str(dest)],capture_output=True,timeout=40)
   if r.returncode or not dest.exists():raise ValueError('conversion failed')
-  image=base64.b64encode(dest.read_bytes()).decode()
- prompt=('Label only what is visually supported in this green-roof photograph. Use the surveyor’s existing vocabulary below. '
-         'Select all applicable terms; do not force a count. Do not infer job identity, consent, billing or payment. '
-         'Previous examples are general vocabulary context, not evidence about this photograph.\n'+examples+
-         '\nReturn a JSON object with labels, containing only a short selection of clearly visible exact terms. Do not repeat the vocabulary list. Use an empty labels array when uncertain.\n'+json.dumps(terms))
- payload={'model':model,'prompt':prompt,'images':[image],'stream':False,'think':False,'format':{'type':'object','properties':{'labels':{'type':'array','maxItems':12,'uniqueItems':True,'items':{'type':'string','enum':terms}}},'required':['labels'],'additionalProperties':False},'options':{'num_ctx':8192,'temperature':0,'num_predict':500}}
- request=urllib.request.Request('http://127.0.0.1:11434/api/generate',data=json.dumps(payload).encode(),headers={'Content-Type':'application/json'})
- with urllib.request.urlopen(request,timeout=reader.reader_timeout()) as response:raw=json.loads(response.read())
- text=raw.get('response','').strip()
- if not text:raise ValueError('empty local reader response')
- labels=json.loads(text)
- if isinstance(labels,dict) and set(labels)=={'labels'}:labels=labels['labels']
- if not isinstance(labels,list) or any(not isinstance(t,str) or t not in terms for t in labels):raise ValueError('local model returned unsupported labels')
- return sorted(set(labels))
+  timeout=reader.reader_timeout() if callable(getattr(reader,'reader_timeout',None)) else 180
+  # Both production and evaluation now exercise the same image transport.
+  audit_root=audit_root or Path.home()/'image-plane/incoming/worker/collection/reader-attempts'
+  return read_labels(dest.read_bytes(),terms,examples,model,timeout,audit_root)
+
+
+def reading_version(terms,base,model):
+ from collection_reader import VERSION as reader_version
+ return source.digest([terms,source.sha_file(Path(__file__)),
+    source.sha_file(Path(__file__).with_name('collection_reader.py')),
+    source.sha_file(base/'fewshot_engine.py'),model,reader_version])
 
 
 def run(config,limit=None,model_limit=None):
@@ -101,7 +107,10 @@ def run(config,limit=None,model_limit=None):
   if not p.exists():raise
   canon=json.loads(p.read_text());canon_state='stale: '+type(e).__name__
   for origin in canon['sources'].values():origin['availability']='unavailable'
- revision=source.digest([VERSION,source.sha_file(Path(__file__)),inputs['revision'],notes_revision,canon['revision'],canon_state,source.sha_file(base/'vocab_v2.py')])
+ from collection_geo import load_geo,location_evidence
+ geo=load_geo(base)
+ label_version=reading_version(terms,base,config.get('model','qwen2.5vl:3b'))
+ revision=source.digest([VERSION,source.sha_file(Path(__file__)),inputs['revision'],notes_revision,canon['revision'],canon_state,source.sha_file(base/'vocab_v2.py'),geo['signatures'],label_version])
  members,collections_checked=source.discover(base,inputs,config['roots'])
  for path,member in members.items():
   p=Path(path)
@@ -116,7 +125,6 @@ def run(config,limit=None,model_limit=None):
  model_enabled=(model_limit if model_limit is not None else config.get('model_batch',4))>0
  todo=db.execute("select * from work where (state in ('pending','retry') or (state='pending_model' and ?)) and next_retry<=? order by case when state='pending_model' then 1 else 0 end,attempts,updated,path limit ?",(model_enabled,time.time(),limit or config.get('batch_size',150))).fetchall()
  reader=None
- label_version=source.digest([terms,source.sha_file(base/'fewshot_engine.py'),config.get('model','qwen2.5vl:3b'),'full-vocabulary-proposals/2'])
  for item in todo:
   path=item['path']
   try:
@@ -129,6 +137,7 @@ def run(config,limit=None,model_limit=None):
     named_refs={source.record_ref(x) for m in member for x in re.findall(r'(?<![0-9])\d{3,4}-\d{2}(?![0-9])',str(m.get('album') or ''))};named_refs.discard(None)
     if len(named_refs)==1:album_ref=next(iter(named_refs))
    identity=resolve_photo(path,sha,album_ref,allocation,canon)
+   identity['geolocation']=location_evidence(path,geo,original=capture_gps(path))
    companies=sorted(inputs['job_companies'].get(identity.get('job_ref'),[]))
    identity['company']={'state':'proposed' if len(companies)==1 else 'unresolved','value':companies[0] if len(companies)==1 else None,'historical_tracking_candidates':companies}
    day,date_source=capture_day(path,inputs['dates'].get(path))
@@ -138,8 +147,9 @@ def run(config,limit=None,model_limit=None):
    prior=inputs['prior_labels'].get(sha,[])
    machine=sorted(set(machine)|{t for t in prior if isinstance(t,str) and t in terms})
    cached=db.execute('select labels from readings where sha=? and version=?',(sha,label_version)).fetchone()
+   reading_error=None;read_this_photo=False
    if cached:machine=sorted(set(machine)|set(json.loads(cached['labels'])))
-   elif not lee and len(machine)<2 and calls<(model_limit if model_limit is not None else config.get('model_batch',4)):
+   elif not lee and calls<(model_limit if model_limit is not None else config.get('model_batch',4)):
     if reader is None:reader=load_module('collection_existing_reader',base/'fewshot_engine.py')
     # General examples from different original paths/jobs, no target or same-byte teaching.
     examples=[]
@@ -150,8 +160,13 @@ def run(config,limit=None,model_limit=None):
      labs,_=original_labels(ns,vocab)
      if labs:examples.append('Prior approved label vocabulary example: '+', '.join(labs))
      if len(examples)==3:break
-    calls+=1;extra=local_labels(reader,path,terms,'\n'.join(examples),config.get('model','qwen2.5vl:3b'))
-    db.execute('insert or replace into readings values(?,?,?,?,?)',(sha,label_version,json.dumps(extra),config.get('model','qwen2.5vl:3b'),time.time()));machine=sorted(set(machine)|set(extra))
+    calls+=1
+    try:
+     extra=local_labels(reader,path,terms,'\n'.join(examples),config.get('model','qwen2.5vl:3b'),state/'reader-attempts')
+     db.execute('insert or replace into readings values(?,?,?,?,?)',(sha,label_version,json.dumps(extra),config.get('model','qwen2.5vl:3b'),time.time()));machine=sorted(set(machine)|set(extra));read_this_photo=True
+    except Exception as e:
+     reading_error=type(e).__name__+': local image reading failed; inspect private reader-attempts'
+     errors+=1
    removed={str(t) for row in notes.get(path,[]) for t in row.get('remove',[])}
    for t in list(removed):
     alias=vocab.NOTE_ALIASES.get(t.lower().replace('_','-').replace(' ','-'))
@@ -161,10 +176,14 @@ def run(config,limit=None,model_limit=None):
    result={'path':path,'sha256':sha,'original_name':Path(path).name,'memberships':member,'identity':identity,'event':event,'date':day,'date_source':date_source,
            'keywords':{'lee':lee,'original_words':original,'machine_proposals':sorted(set(machine)-set(lee))},'thumb':str(thumb),
            'source_revision':revision,'caption_reused':bool(caption),'canon_state':canon_state,'customer_publication':False,'processed_at':time.time()}
-   status='processed' if lee or machine else 'keywords_unresolved' if cached or calls else 'pending_model'
-   if not lee and not machine and not cached and calls >= (model_limit if model_limit is not None else config.get('model_batch',4)):
-    status='pending_model' if not db.execute('select 1 from readings where sha=? and version=?',(sha,label_version)).fetchone() else 'keywords_unresolved'
-   db.execute('update work set sha=?,state=?,result=?,error=NULL,updated=? where path=?',(sha,status,json.dumps(result),time.time(),path));db.commit();processed+=1
+   result['reading']={'state':'failed' if reading_error else 'lee_annotations' if lee else 'parsed_proposal' if cached or read_this_photo else 'pending',
+                      'version':label_version,'semantic_acceptance':False,'legacy_keywords_revalidated':False}
+   status='processed' if lee or cached or read_this_photo else 'pending_model'
+   attempts=item['attempts']+1 if reading_error else 0
+   if reading_error:status='retry' if attempts<3 else 'attention'
+   db.execute('update work set sha=?,state=?,result=?,error=?,attempts=?,next_retry=?,updated=? where path=?',
+      (sha,status,json.dumps(result),reading_error,attempts,time.time()+min(3600,60*2**attempts) if reading_error else 0,time.time(),path))
+   db.commit();processed+=1
   except Exception as e:
    attempts=item['attempts']+1;errors+=1
    db.execute('update work set state=?,attempts=?,next_retry=?,error=?,updated=? where path=?',('retry' if attempts<3 else 'attention',attempts,time.time()+min(3600,60*2**attempts),type(e).__name__+': '+str(e)[:160],time.time(),path));db.commit()
@@ -188,7 +207,7 @@ def run(config,limit=None,model_limit=None):
  db.commit()
  # Readers consume the same derivative result file; atomic replacement preserves
  # prior snapshot until the current batch is durable. No canonical facts copied.
- results=[json.loads(r[0]) for r in db.execute('select result from work where result is not null and state in (\'processed\',\'keywords_unresolved\',\'pending_model\',\'recovered_copy\')')]
+ results=[json.loads(r[0]) for r in db.execute("select result from work where result is not null and (state in ('processed','keywords_unresolved','pending_model','recovered_copy') or (state in ('retry','attention') and error like '%local image reading failed%'))")]
  # Collapse exact content copies in the view while retaining all memberships.
  merged={}
  for r in results:
@@ -206,6 +225,8 @@ def run(config,limit=None,model_limit=None):
  receipt={'started':started,'finished':time.time(),'source_revision':revision,'processed_this_run':processed,'missing_locations_recovered_this_run':recovered,'model_calls':calls,'errors':errors,'population':len(members),'states':counts,
           'photos_with_keywords':sum(bool(r['keywords']['lee'] or r['keywords']['machine_proposals']) for r in results),'photos_with_multiple_keywords':sum(len(r['keywords']['lee'])+len(r['keywords']['machine_proposals'])>1 for r in results),
           'job_refs_with_provisional_photos':len({r['identity']['job_ref'] for r in results if r['identity'].get('job_ref')}),'unique_contents_processed':len({r['sha256'] for r in results}),'full_collection_complete':False}
+ receipt['reading_stages']={stage:sum(r.get('reading',{}).get('state')==stage for r in results) for stage in ('pending','failed','lee_annotations','parsed_proposal')}
+ receipt['geolocation_stages']=dict(collections.Counter(r['identity'].get('geolocation',{}).get('state','not_checked') for r in results))
  for company,coverage in inputs['xero_coverage'].items():
   coverage['job_refs_with_processed_photos']=len(set(coverage['refs']) & {r['identity'].get('job_ref') for r in results})
  source.write_json(state/'xero-coverage.json',inputs['xero_coverage'])

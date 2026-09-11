@@ -1,3 +1,16 @@
+# Current executed checkpoint — 11 September 2026
+
+The existing private phone monitor now shows current entry screening and saved
+published photographs, with separate held diagnostics and stale-source indicators.
+See [the executed receipt](docs/PHONE-MONITOR-2026-09-11.md). Physical iPhone acceptance,
+complete source coverage and full photo/diagnostic completion remain unproved.
+Existing processing workers continue; no replacement classifier or store was created.
+
+The following July checkpoint is preserved as historical evidence, not live counts
+or a statement that its old blockers remain current.
+
+---
+
 # CURRENT_STATE.md — image-plane (LEE-411)
 
 **11 Jul ~19:45 — F6 REPO VIEW BUILT, VERIFIED, MERGED (branch f6-repo-view → main).**

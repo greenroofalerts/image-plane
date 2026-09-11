@@ -1,3 +1,38 @@
+# Current execution context — phone monitor slice, 11 September 2026
+
+This branch captures the existing Mini A monitor and its tests. It does not replace
+or bootstrap the Image Plane application, intake, classifier or Identity Ladder.
+The current user instruction authorises making that existing monitor usable privately
+on a phone while preserving concurrent Image Plane and Memory Spine processing.
+This paragraph records implementation scope; it is not a new business ruling.
+
+For this narrow slice, read and apply:
+
+1. The current user continuation and phone-monitor instruction, with the maintained
+   State of Play `docs/GREEN-ROOF-SPINE-BUILD-BRIEF.md` on `main` (phone-visible
+   execution amendment). Preserve product ownership, originals and existing workers;
+   report actual execution separately from instructions and configuration.
+2. The current Mini A runtime documents under
+   `incoming/worker/build-continuation-20260910/`: `CURRENT-STATUS.md` and
+   `IMAGE-PLANE-AGENT-HANDOVER.md`; and `~/image-plane/docs/SCREENING-GATE-REPAIR-2026-09-10.md`
+   plus `IMAGE-TEXT-REPAIR-2026-09-10.md`. These are operational contracts/checkpoints,
+   not certification that the whole pipeline is complete.
+3. The current `green-roof-image-plane` and `id-ladder` skills, machine `COMPASS.md`
+   and `ASK-LEDGER.md`. Use the existing read-only records and source-scoped guards;
+   no identity reassignment, inferred approval, species authority or customer send.
+4. `docs/PHONE-MONITOR-2026-09-11.md` and the current dated section in
+   `CURRENT_STATE.md` for this slice's actual source/runtime, verification and rollback.
+
+The full-application manifest below is retained as history and broader context.
+Its referenced root `CLAUDE.md` is absent from the inspected repository and Mini A
+runtime; its prior `CURRENT_STATE.md` is July history and several older rules have
+later corrections in the current skills. No missing file is claimed read. The narrow
+monitor execution contract above supplies the current scope without inventing a
+replacement application canon or treating a missing/stale instruction as business
+authority. Full-application canonical reconciliation remains separate work.
+
+---
+
 # docs/CANONICAL-BUILD-CONTEXT.md — image-plane (LEE-411) canonical-docs manifest
 
 **Status:** CANONICAL — staged 2026-07-10 late eve, ratified same night by Lee's "go in new window, handover".

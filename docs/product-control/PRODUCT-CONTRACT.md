@@ -121,14 +121,16 @@ Fix law: one failing condition at a time. Fix it, rerun, commit, receipt,
 then move to the next. Completion is every condition passing against the
 real system — never a claim built on ingestion volume.
 
-## Honest state (updated 2026-09-25 after the C3 fix; prior state below)
+## Honest state (updated 2026-09-25 after the C11 and C12 fixes; prior state below)
 
-- C1-C10 PASS on the real corpus, this session's harness run on Mini A
-  (12 checks, 10 PASS, 2 FAIL). Counts from that run: C2 6,866
+ALL TWELVE CONDITIONS PASS on the real system (full harness run on Mini A,
+this session, after commit c587378: 12 checks, 12 PASS, 0 FAIL, 0 BLOCKED).
+
+- C1-C10 PASS unchanged from the run before (counts there: C2 6,866
   job-assigned rows, 0 violations; C3 3,058 album-ref rows = 2,520 match
   + 238 ruled-override + 300 withheld-with-evidence + 0 violations;
   C5 253 jobs, sample 20, 0 files missing; C6 all 10,272 rows carry a
-  chargeability value; C7 516 distinct terms.
+  chargeability value; C7 516 distinct terms).
 - C3's first 382 "violations" decomposed by probe into four different
   things, and the fix was in the harness's comparison, not the data:
   79 zero-pad string mismatches (0579-15 vs 579-15, recorded lesson
@@ -142,11 +144,23 @@ real system — never a claim built on ingestion volume.
 - OPEN, not a harness matter: the 300 withheld contradicted photos are
   correct under the riding law but the conflict is never surfaced to Lee
   as a decision. Only Lee can settle which of the two candidate jobs
-  each photo belongs to. The harness prints a BLOCKED note for this.
-- C11 FAIL: the MCP server registers 13 `@mcp.tool`s but a live stdio
-  tools/list handshake answers 0 tools.
-- C12 FAIL: `com.lee.imageplane-siteview` is absent from
-  `launchctl list` (the other two services are loaded and healthy).
+  each photo belongs to. The harness prints a note for this on every run.
+- C11 PASS (commit ee2eb20): the "0 live tools" was the harness's launch
+  command, not the server. The server runs in its own isolated venv
+  (Python 3.12, requirements.lock); plain python3 is system 3.9 with no
+  `mcp` package, so the server died on line 7 in 0.02 s and the harness's
+  discarded stderr read the empty stdout as an empty tools list. Through
+  `.venv/bin/python` the handshake answers all 13 tools in 0.23 s. The
+  harness now launches the venv interpreter and prints stderr's last line
+  on any future FAIL, so a dead server always names its fault.
+- C12 PASS (commit c587378): siteview was never down. It is a SYSTEM
+  LaunchDaemon by design (UserName macminia, RunAtLoad + KeepAlive);
+  plain `launchctl list` reads only the user domain, so a healthy system
+  daemon read as "not loaded". Proven alive this session:
+  `launchctl print system/com.lee.imageplane-siteview` shows
+  `state = running`, and a live fetch of :8787 answers HTTP 200 with the
+  rendered jobs page. The harness now checks each service in its own
+  domain (`launchctl print system/<label>` for the daemon).
 
 ## Honest state at first writing (2026-09-25, kept as history)
 

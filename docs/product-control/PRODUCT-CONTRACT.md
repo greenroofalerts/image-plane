@@ -121,7 +121,34 @@ Fix law: one failing condition at a time. Fix it, rerun, commit, receipt,
 then move to the next. Completion is every condition passing against the
 real system — never a claim built on ingestion volume.
 
-## Honest state at writing (2026-09-25, this session's sweep)
+## Honest state (updated 2026-09-25 after the C3 fix; prior state below)
+
+- C1-C10 PASS on the real corpus, this session's harness run on Mini A
+  (12 checks, 10 PASS, 2 FAIL). Counts from that run: C2 6,866
+  job-assigned rows, 0 violations; C3 3,058 album-ref rows = 2,520 match
+  + 238 ruled-override + 300 withheld-with-evidence + 0 violations;
+  C5 253 jobs, sample 20, 0 files missing; C6 all 10,272 rows carry a
+  chargeability value; C7 516 distinct terms.
+- C3's first 382 "violations" decomposed by probe into four different
+  things, and the fix was in the harness's comparison, not the data:
+  79 zero-pad string mismatches (0579-15 vs 579-15, recorded lesson
+  8 Jul 2026), 63 Lee-ruled alias rows (1588-26 = 1858-26, Lee 1 Aug
+  2026), 238 rows resolved to a different job under an applied Lee
+  ruling (lane0/lee_answer/lee_voice evidence, each carrying basis or
+  authority id), and 2+298 contradicted rows withholding correctly with
+  both sides' evidence preserved. Derived multi-lane evidence alone can
+  never override an album ref — only a Lee ruling can (lane 0 is a veto,
+  not a vote).
+- OPEN, not a harness matter: the 300 withheld contradicted photos are
+  correct under the riding law but the conflict is never surfaced to Lee
+  as a decision. Only Lee can settle which of the two candidate jobs
+  each photo belongs to. The harness prints a BLOCKED note for this.
+- C11 FAIL: the MCP server registers 13 `@mcp.tool`s but a live stdio
+  tools/list handshake answers 0 tools.
+- C12 FAIL: `com.lee.imageplane-siteview` is absent from
+  `launchctl list` (the other two services are loaded and healthy).
+
+## Honest state at first writing (2026-09-25, kept as history)
 
 - C1 not yet probed. C2 and C4 pass once Lee's voice rulings in
   list-shaped evidence are read correctly (first read of 4,179 rows as

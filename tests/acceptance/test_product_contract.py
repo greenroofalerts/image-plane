@@ -152,8 +152,57 @@ def check_c2_c4(records):
 
 
 # ---------------------------------------------------------------- C3
+# Lee-ruled job-reference aliases: each set is ONE job.
+# 1588-26 = 1858-26 — Lee, 1 Aug 2026: "1588 is a known mistype that has
+# worked its way into even invoices - just combine them" (ask ledger, ID
+# LADDER section). The alias applies wherever a job reference is read.
+ALIASES = [frozenset(("1588-26", "1858-26"))]
+
+# Zero-pad is a recorded lesson (knowledge_notes canon rows, 8 Jul 2026):
+# album titles carry leading-zero refs (0579-15), assignments use the plain
+# form (579-15). Same job, string mismatch.
+def norm_ref(r):
+    head, sep, tail = str(r).partition("-")
+    return (head.lstrip("0") or "0") + sep + tail
+
+
+def refs_equal(a, b):
+    if not a or not b:
+        return False
+    return (a == b or norm_ref(a) == norm_ref(b)
+            or frozenset((a, b)) in ALIASES)
+
+
+# Evidence kinds that ARE a Lee ruling. Lane 0 is a veto, not a vote, so a
+# ruling is the "stronger canonical evidence" C3 itself names. Derived
+# multi-lane evidence (ladder-run, lanes, spine-citation) is NOT in this
+# set: derived lanes never outvote an album title on their own.
+RULING_KINDS = {"lee_answer", "lane0-settled", "lee_voice"}
+
+
+def evidence_values(job):
+    """Scalar ref values anywhere in the evidence object, so a withheld
+    row can show its contradiction even when the top-level candidates list
+    holds only one side (both sides preserved = inspectable, C3's clause)."""
+    vals = set()
+
+    def walk(o):
+        if isinstance(o, dict):
+            for k, v in o.items():
+                if k in ("value", "job_ref", "candidates") and isinstance(v, str):
+                    vals.add(v)
+                else:
+                    walk(v)
+        elif isinstance(o, list):
+            for x in o:
+                walk(x)
+
+    walk(job.get("evidence"))
+    return vals
+
+
 def check_c3(records):
-    ok = withheld = conflicts = 0
+    ok = ruled = withheld = 0
     viol = []
     for r in records:
         ident = dicto(r.get("identity"))
@@ -165,24 +214,32 @@ def check_c3(records):
             if not refs:
                 continue
             aref = refs[0]
-            if jr == aref:
+            if refs_equal(jr, aref):
                 ok += 1
                 continue
-            cands = job.get("candidates") or []
-            if job.get("state") == "contradicted" and aref in cands:
-                evok, kind = evidence_ok(job, r)
+            evok, kind = evidence_ok(job, r)
+            if job.get("state") == "contradicted" and (
+                    aref in (job.get("candidates") or [])
+                    or aref in evidence_values(job)):
                 if evok or job.get("evidence"):
                     withheld += 1
                 else:
                     viol.append((r.get("sha256", "")[:12], title, aref,
                                   "contradicted-no-evidence"))
+            elif evok and kind in RULING_KINDS:
+                ruled += 1
             else:
                 viol.append((r.get("sha256", "")[:12], title, aref, jr))
     passed = verdict("C3", not viol,
-                     "album-ref rows=%d match=%d withheld-with-evidence=%d "
-                     "violations=%d %s"
-                     % (ok + withheld + len(viol), ok, withheld, len(viol),
-                        viol[:5]))
+                     "album-ref rows=%d match=%d (incl. zero-pad/alias "
+                     "normalization) ruled-override=%d "
+                     "withheld-with-evidence=%d violations=%d %s"
+                     % (ok + ruled + withheld + len(viol), ok, ruled,
+                        withheld, len(viol), viol[:5]))
+    if ruled:
+        print("   C3-note — %d album-ref photos resolve to a different job "
+              "under an applied Lee ruling (lane0/lee_voice/lee_answer, each "
+              "carrying basis or authority id in the record)." % ruled)
     if withheld:
         print("   C3-note BLOCKED — %d album-ref photos are correctly "
               "withheld as contradicted with evidence, but the conflict is "

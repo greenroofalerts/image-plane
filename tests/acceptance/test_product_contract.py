@@ -403,22 +403,37 @@ def check_c11():
 # ---------------------------------------------------------------- C12
 PLISTS = [
     ("com.leeos.image-plane-daily-worker",
-     os.path.expanduser("~/Library/LaunchAgents/com.leeos.image-plane-daily-worker.plist")),
+     os.path.expanduser("~/Library/LaunchAgents/com.leeos.image-plane-daily-worker.plist"),
+     "user"),
     ("com.leeos.image-plane-job-screen",
-     os.path.expanduser("~/Library/LaunchAgents/com.leeos.image-plane-job-screen.plist")),
+     os.path.expanduser("~/Library/LaunchAgents/com.leeos.image-plane-job-screen.plist"),
+     "user"),
+    # siteview is a SYSTEM LaunchDaemon by design (UserName macminia, KeepAlive,
+    # installed under /Library/LaunchDaemons). Plain `launchctl list` reads only
+    # the user domain, so a healthy system daemon read as "not loaded". Its
+    # domain is queried with `launchctl print system/<label>` (state = running).
     ("com.lee.imageplane-siteview",
-     "/Library/LaunchDaemons/com.lee.imageplane-siteview.plist"),
+     "/Library/LaunchDaemons/com.lee.imageplane-siteview.plist",
+     "system"),
 ]
 
 
+def _service_loaded(label, domain):
+    if domain == "user":
+        out = subprocess.run(["launchctl", "list"], capture_output=True,
+                             text=True).stdout
+        return label in out
+    out = subprocess.run(["launchctl", "print", "system/" + label],
+                         capture_output=True, text=True)
+    return "state = running" in out.stdout
+
+
 def check_c12():
-    out = subprocess.run(["launchctl", "list"], capture_output=True,
-                         text=True).stdout
     problems = []
-    for label, path in PLISTS:
-        loaded = label in out
+    for label, path, domain in PLISTS:
+        loaded = _service_loaded(label, domain)
         if not loaded:
-            problems.append("%s not in launchctl list" % label)
+            problems.append("%s not loaded (checked %s domain)" % (label, domain))
         if not os.path.exists(path):
             problems.append("%s plist missing" % label)
             continue
@@ -427,7 +442,7 @@ def check_c12():
             problems.append("%s plist has no restart key" % label)
     verdict("C12", not problems,
             "services=%s problems=%s"
-            % ([l for l, _ in PLISTS], problems if problems else "none"))
+            % ([l for l, _, _ in PLISTS], problems if problems else "none"))
 
 
 def main():

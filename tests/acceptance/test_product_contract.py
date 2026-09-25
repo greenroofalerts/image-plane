@@ -361,10 +361,17 @@ def check_c11():
     if n == 0:
         verdict("C11", False, "no @mcp.tool registrations found in server.py")
         return
+    # The server runs in its own isolated venv (Python 3.12 + pinned MCP SDK,
+    # requirements.lock beside it — docs/IMAGE-PLANE-MCP-2026-09-10.md). Plain
+    # python3 is the system 3.9 with no `mcp` package, so it dies on line 7
+    # and an empty stdout reads as "0 tools". Launch the venv interpreter;
+    # keep stderr so a dead server names its fault instead of hiding it.
+    venv_py = os.path.join(os.path.dirname(MCP), ".venv/bin/python")
+    launch = [venv_py if os.path.exists(venv_py) else "python3", MCP]
     try:
         proc = subprocess.Popen(
-            ["python3", MCP], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL, cwd=os.path.dirname(MCP))
+            launch, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, cwd=os.path.dirname(MCP))
         msgs = [
             {"jsonrpc": "2.0", "id": 1, "method": "initialize",
              "params": {"protocolVersion": "2024-11-05",
@@ -374,7 +381,7 @@ def check_c11():
             {"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
         ]
         payload = "".join(json.dumps(m) + "\n" for m in msgs)
-        out, _ = proc.communicate(payload.encode(), timeout=20)
+        out, err = proc.communicate(payload.encode(), timeout=20)
         listed = 0
         for line in out.decode("utf-8", "replace").splitlines():
             try:
@@ -383,9 +390,10 @@ def check_c11():
                 continue
             if resp.get("id") == 2:
                 listed = len((resp.get("result") or {}).get("tools") or [])
+        tail = err.decode("utf-8", "replace").strip().splitlines()[-1:] or [""]
         verdict("C11", listed >= 10,
-                "registered tools=%d; live tools/list answered with %d tools"
-                % (n, listed))
+                "registered tools=%d; live tools/list answered with %d tools%s"
+                % (n, listed, "; stderr: " + tail[0] if listed < 10 else ""))
     except Exception as e:
         verdict("C11", True if n >= 10 else False,
                 "registered tools=%d; live handshake not completed (%s)"
